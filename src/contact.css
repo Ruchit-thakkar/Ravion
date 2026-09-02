@@ -1,0 +1,150 @@
+.contact-v2 {
+    position: relative;
+    padding: 135px 0;
+    background: radial-gradient(circle at 10% 15%, #dfc49978, transparent 25%)
+}
+
+.contact-v2 h2 {
+    max-width: 520px
+}
+
+.contact-v2>div>p:last-of-type {
+    font-size: 18px;
+    max-width: 420px
+}
+
+.contact-direct {
+    display: grid;
+    gap: 11px;
+    margin-top: 35px
+}
+
+.contact-direct a {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    color: #294944;
+    font-size: 14px
+}
+
+.contact form .form-message {
+    margin: 0;
+    color: #45655d;
+    font-size: 14px;
+    line-height: 1.4
+}
+
+.footer-v2 {
+    padding: 0;
+    background: var(--deep);
+    color: var(--cream)
+}
+
+.footer-top {
+    min-height: 325px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid #ffffff35;
+    gap: 30px
+}
+
+.footer-top .brand {
+    filter: brightness(0) invert(1);
+    position: absolute;
+    align-self: flex-start;
+    margin-top: 37px
+}
+
+.footer-top h2 {
+    font-size: clamp(43px, 5vw, 70px);
+    margin: 58px 0 0
+}
+
+.footer-top h2 em {
+    color: #d5ad6d
+}
+
+.footer-top .button {
+    background: #d5ad6d;
+    color: var(--ink)
+}
+
+.footer-top .button:hover {
+    background: #fff
+}
+
+.footer-bottom {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 22px 0;
+    font-size: 12px;
+    color: #b8c9c5
+}
+
+.footer-bottom p {
+    margin: 0
+}
+
+.footer-bottom div {
+    display: flex;
+    gap: 20px
+}
+
+.footer-bottom a:hover {
+    color: #d5ad6d
+}
+
+.admin-logout {
+    background: transparent;
+    color: #c5d3d0;
+    border: 0;
+    padding: 10px;
+    text-align: left;
+    cursor: pointer;
+    font-size: 14px
+}
+
+.admin-logout:hover {
+    color: #fff
+}
+
+@media(max-width:780px) {
+    .contact-v2 {
+        padding: 85px 0
+    }
+
+    .footer-top {
+        min-height: 330px;
+        align-items: flex-end;
+        padding: 38px 0;
+        flex-direction: column
+    }
+
+    .footer-top .brand {
+        position: static;
+        align-self: flex-start;
+        margin: 0
+    }
+
+    .footer-top h2 {
+        align-self: flex-start;
+        margin: 20px 0
+    }
+
+    .footer-top .button {
+        align-self: flex-start
+    }
+
+    .footer-bottom {
+        align-items: flex-start;
+        gap: 18px;
+        flex-direction: column
+    }
+
+    .footer-bottom div {
+        gap: 13px;
+        flex-wrap: wrap
+    }
+}
