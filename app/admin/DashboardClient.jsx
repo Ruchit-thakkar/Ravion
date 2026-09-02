@@ -44,12 +44,12 @@ export default function DashboardClient({ user }) {
   };
 
   const navItems = [
-    { name: "Dashboard", icon: LayoutDashboard, active: true },
-    { name: "Samples", icon: FolderKanban, active: false, badge: "Phase 2" },
-    { name: "Categories", icon: Tags, active: false, badge: "Phase 2" },
-    { name: "Services", icon: Briefcase, active: false, badge: "Phase 2" },
-    { name: "Inquiries", icon: MailCheck, active: false, badge: "Phase 2" },
-    { name: "Settings", icon: Settings, active: false, badge: "Phase 2" },
+    { name: "Dashboard", href: "/admin", icon: LayoutDashboard, active: true },
+    { name: "Inquiry", href: "/admin/inquiry", icon: MailCheck, active: false },
+    { name: "Samples", href: "#", icon: FolderKanban, active: false, badge: "Phase 2" },
+    { name: "Categories", href: "#", icon: Tags, active: false, badge: "Phase 2" },
+    { name: "Services", href: "#", icon: Briefcase, active: false, badge: "Phase 2" },
+    { name: "Settings", href: "#", icon: Settings, active: false, badge: "Phase 2" },
   ];
 
   return (
@@ -75,14 +75,28 @@ export default function DashboardClient({ user }) {
         <nav className="flex-1 space-y-1.5">
           {navItems.map((item) => {
             const Icon = item.icon;
+            if (item.href && item.href !== "#") {
+              return (
+                <Link
+                  key={item.name}
+                  href={item.href}
+                  className={`flex items-center justify-between rounded-xl px-3.5 py-2.5 text-sm font-medium transition-colors ${
+                    item.active
+                      ? "bg-[#c99a55]/15 text-[#d1aa6b] border border-[#c99a55]/30 font-semibold"
+                      : "text-[#f5f0e8]/70 hover:bg-[#062623] hover:text-[#f5f0e8]"
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <Icon className="h-4 w-4" />
+                    <span>{item.name}</span>
+                  </div>
+                </Link>
+              );
+            }
             return (
               <div
                 key={item.name}
-                className={`flex items-center justify-between rounded-xl px-3.5 py-2.5 text-sm font-medium transition-colors ${
-                  item.active
-                    ? "bg-[#c99a55]/15 text-[#d1aa6b] border border-[#c99a55]/30 font-semibold"
-                    : "text-[#f5f0e8]/50 hover:bg-[#062623] hover:text-[#f5f0e8]/80 cursor-not-allowed opacity-60"
-                }`}
+                className="flex items-center justify-between rounded-xl px-3.5 py-2.5 text-sm font-medium text-[#f5f0e8]/40 cursor-not-allowed opacity-60"
               >
                 <div className="flex items-center gap-3">
                   <Icon className="h-4 w-4" />
