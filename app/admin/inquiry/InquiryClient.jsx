@@ -19,9 +19,9 @@ import {
   MessageCircle,
   Clock,
   Trash2,
-  CheckCircle2,
-  AlertCircle,
   Search,
+  Menu,
+  X,
 } from "lucide-react";
 
 export default function InquiryClient({ user }) {
@@ -32,6 +32,7 @@ export default function InquiryClient({ user }) {
   const [search, setSearch] = useState("");
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [actionNotice, setActionNotice] = useState("");
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const displayName = user?.email
     ? user.email.split("@")[0].charAt(0).toUpperCase() + user.email.split("@")[0].slice(1)
@@ -113,6 +114,13 @@ export default function InquiryClient({ user }) {
     { name: "Settings", href: "#", icon: Settings, active: false, badge: "Phase 2" },
   ];
 
+  const counts = {
+    all: inquiries.length,
+    new: inquiries.filter((i) => i.status === "new" || !i.status).length,
+    contacted: inquiries.filter((i) => i.status === "contacted").length,
+    closed: inquiries.filter((i) => i.status === "closed").length,
+  };
+
   const filteredInquiries = inquiries.filter((item) => {
     const matchesFilter =
       filter === "all" || item.status?.toLowerCase() === filter.toLowerCase();
@@ -127,16 +135,125 @@ export default function InquiryClient({ user }) {
     return matchesFilter && matchesSearch;
   });
 
-  const counts = {
-    all: inquiries.length,
-    new: inquiries.filter((i) => i.status === "new" || !i.status).length,
-    contacted: inquiries.filter((i) => i.status === "contacted").length,
-    closed: inquiries.filter((i) => i.status === "closed").length,
-  };
-
   return (
-    <div className="flex min-h-screen bg-[#031513] text-[#f5f0e8] selection:bg-[#c99a55] selection:text-[#031513]">
-      {/* Sidebar Navigation */}
+    <div className="flex min-h-screen overflow-x-hidden bg-[#031513] text-[#f5f0e8] selection:bg-[#c99a55] selection:text-[#031513]">
+      {/* Mobile Drawer Backdrop */}
+      {mobileMenuOpen && (
+        <div
+          onClick={() => setMobileMenuOpen(false)}
+          className="fixed inset-0 z-40 bg-black/80 backdrop-blur-sm transition-opacity duration-300 md:hidden"
+          aria-hidden="true"
+        />
+      )}
+
+      {/* Mobile Slide-in Drawer Sidebar (≤ 768px) */}
+      <aside
+        className={`fixed inset-y-0 left-0 z-50 flex w-72 max-w-[85vw] flex-col border-r border-[#c99a55]/20 bg-[#041d1a] p-6 shadow-2xl transition-transform duration-300 ease-in-out md:hidden ${
+          mobileMenuOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
+      >
+        <div className="mb-8 flex items-center justify-between">
+          <div>
+            <Link
+              href="/admin"
+              onClick={() => setMobileMenuOpen(false)}
+              className="inline-block"
+            >
+              <img
+                src="/assets/ravion-logo.png"
+                alt="RAVION"
+                className="h-8 w-auto brightness-0 invert"
+              />
+            </Link>
+            <div className="mt-1.5 inline-flex items-center gap-1.5 font-mono text-[10px] tracking-widest text-[#d1aa6b] uppercase">
+              <Shield className="h-3 w-3" />
+              <span>Admin Console</span>
+            </div>
+          </div>
+
+          <button
+            onClick={() => setMobileMenuOpen(false)}
+            className="flex h-11 w-11 min-h-[44px] min-w-[44px] items-center justify-center rounded-xl border border-[#c99a55]/25 bg-[#062623] text-[#f5f0e8]/80 transition-all hover:border-[#c99a55] hover:text-[#d1aa6b] active:scale-95"
+            aria-label="Close sidebar"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+
+        {/* Mobile Navigation Links */}
+        <nav className="flex-1 space-y-2 overflow-y-auto">
+          {navItems.map((item) => {
+            const Icon = item.icon;
+            if (item.href && item.href !== "#") {
+              return (
+                <Link
+                  key={item.name}
+                  href={item.href}
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={`flex items-center justify-between rounded-xl px-4 py-3 text-sm font-medium transition-colors ${
+                    item.active
+                      ? "bg-[#c99a55]/15 text-[#d1aa6b] border border-[#c99a55]/30 font-semibold"
+                      : "text-[#f5f0e8]/75 hover:bg-[#062623] hover:text-[#f5f0e8]"
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <Icon className="h-4 w-4" />
+                    <span>{item.name}</span>
+                  </div>
+                  {item.name === "Inquiry" && counts.new > 0 && (
+                    <span className="rounded-full bg-[#c99a55] px-2 py-0.5 text-[10px] font-bold text-[#041d1a]">
+                      {counts.new}
+                    </span>
+                  )}
+                </Link>
+              );
+            }
+            return (
+              <div
+                key={item.name}
+                className="flex items-center justify-between rounded-xl px-4 py-3 text-sm font-medium text-[#f5f0e8]/40 cursor-not-allowed opacity-60"
+              >
+                <div className="flex items-center gap-3">
+                  <Icon className="h-4 w-4" />
+                  <span>{item.name}</span>
+                </div>
+                {item.badge && (
+                  <span className="rounded bg-[#062623] px-2 py-0.5 font-mono text-[9px] text-[#d1aa6b]/70 border border-[#c99a55]/20">
+                    {item.badge}
+                  </span>
+                )}
+              </div>
+            );
+          })}
+        </nav>
+
+        {/* Mobile Bottom Utility Links */}
+        <div className="border-t border-[#c99a55]/15 pt-5 space-y-3">
+          <Link
+            href="/"
+            target="_blank"
+            className="flex items-center justify-between rounded-xl border border-[#c99a55]/20 px-4 py-2.5 text-xs font-mono text-[#d1aa6b] transition-all hover:bg-[#c99a55]/10"
+          >
+            <span>Live Website</span>
+            <ExternalLink className="h-3.5 w-3.5" />
+          </Link>
+
+          <button
+            onClick={handleLogout}
+            disabled={isLoggingOut}
+            className="flex w-full items-center gap-2.5 rounded-xl border border-red-500/20 bg-red-950/20 px-4 py-2.5 text-xs font-medium text-red-300 transition-colors hover:bg-red-900/30 active:scale-[0.99]"
+          >
+            {isLoggingOut ? (
+              <Loader2 className="h-4 w-4 animate-spin text-red-400" />
+            ) : (
+              <LogOut className="h-4 w-4 text-red-400" />
+            )}
+            <span>Sign Out</span>
+          </button>
+        </div>
+      </aside>
+
+      {/* Desktop Permanent Sidebar (> 768px) */}
       <aside className="hidden w-64 flex-col border-r border-[#c99a55]/15 bg-[#041d1a]/80 p-6 backdrop-blur-xl md:flex">
         <div className="mb-8">
           <Link href="/admin" className="inline-block">
@@ -222,20 +339,31 @@ export default function InquiryClient({ user }) {
         </div>
       </aside>
 
-      {/* Main Content */}
-      <div className="flex flex-1 flex-col overflow-y-auto">
+      {/* Main Content Area */}
+      <div className="flex min-w-0 flex-1 flex-col overflow-y-auto">
         {/* Top Header */}
-        <header className="sticky top-0 z-10 flex h-20 items-center justify-between border-b border-[#c99a55]/15 bg-[#031513]/80 px-6 backdrop-blur-md md:px-10">
-          <div>
-            <p className="font-mono text-[11px] font-medium tracking-widest text-[#d1aa6b] uppercase">
-              RAVION ADMIN
-            </p>
-            <h1 className="font-serif text-xl font-semibold text-[#f5f0e8] md:text-2xl">
-              Inquiries
-            </h1>
+        <header className="sticky top-0 z-20 flex h-20 items-center justify-between border-b border-[#c99a55]/15 bg-[#031513]/90 px-4 backdrop-blur-md sm:px-6 md:px-10">
+          <div className="flex items-center gap-3">
+            {/* Mobile Hamburger Menu Button (≥ 44×44px click area, clearly visible on ≤ 768px) */}
+            <button
+              onClick={() => setMobileMenuOpen(true)}
+              className="flex h-11 w-11 min-h-[44px] min-w-[44px] items-center justify-center rounded-xl border border-[#c99a55]/30 bg-[#062623] text-[#d1aa6b] shadow-sm transition-all hover:border-[#c99a55] hover:bg-[#0a3531] active:scale-95 md:hidden"
+              aria-label="Open navigation sidebar"
+            >
+              <Menu className="h-5 w-5" />
+            </button>
+
+            <div>
+              <p className="font-mono text-[10px] font-medium tracking-widest text-[#d1aa6b] uppercase sm:text-[11px]">
+                RAVION ADMIN
+              </p>
+              <h1 className="font-serif text-lg font-semibold text-[#f5f0e8] sm:text-xl md:text-2xl">
+                Inquiries
+              </h1>
+            </div>
           </div>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3 sm:gap-4">
             <div className="hidden text-right sm:block">
               <p className="text-xs font-medium text-[#f5f0e8]">
                 Welcome, <span className="text-[#d1aa6b]">{displayName}</span>
@@ -246,7 +374,7 @@ export default function InquiryClient({ user }) {
             <button
               onClick={handleLogout}
               disabled={isLoggingOut}
-              className="inline-flex items-center gap-2 rounded-xl border border-[#c99a55]/30 bg-[#062623] px-4 py-2 text-xs font-medium text-[#f5f0e8] transition-all hover:border-[#c99a55] hover:bg-[#0a3531] active:scale-95"
+              className="inline-flex min-h-[40px] items-center gap-2 rounded-xl border border-[#c99a55]/30 bg-[#062623] px-3.5 py-2 text-xs font-medium text-[#f5f0e8] transition-all hover:border-[#c99a55] hover:bg-[#0a3531] active:scale-95 sm:px-4"
             >
               {isLoggingOut ? (
                 <Loader2 className="h-3.5 w-3.5 animate-spin text-[#d1aa6b]" />
@@ -259,12 +387,12 @@ export default function InquiryClient({ user }) {
         </header>
 
         {/* Inquiries Body */}
-        <main className="flex-1 p-6 md:p-10">
+        <main className="flex-1 p-4 sm:p-6 md:p-10">
           <div className="mx-auto max-w-5xl space-y-6">
             {/* Header info & filters */}
             <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
               <div>
-                <h2 className="font-serif text-3xl font-semibold text-[#f5f0e8]">
+                <h2 className="font-serif text-2xl sm:text-3xl font-semibold text-[#f5f0e8]">
                   Client Inquiries
                 </h2>
                 <p className="mt-1 text-xs text-[#f5f0e8]/60">
@@ -296,7 +424,7 @@ export default function InquiryClient({ user }) {
                 <button
                   key={tab.key}
                   onClick={() => setFilter(tab.key)}
-                  className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-mono transition-all ${
+                  className={`inline-flex items-center gap-2 rounded-xl px-3.5 py-1.5 sm:px-4 sm:py-2 text-xs font-mono transition-all ${
                     filter === tab.key
                       ? "bg-[#c99a55] text-[#031513] font-bold"
                       : "bg-[#062623]/60 text-[#f5f0e8]/70 hover:bg-[#062623] hover:text-[#f5f0e8]"
@@ -329,7 +457,7 @@ export default function InquiryClient({ user }) {
               </div>
             ) : filteredInquiries.length === 0 ? (
               /* Empty State */
-              <div className="rounded-2xl border border-[#c99a55]/15 bg-[#062623]/40 p-12 text-center backdrop-blur-sm">
+              <div className="rounded-2xl border border-[#c99a55]/15 bg-[#062623]/40 p-8 sm:p-12 text-center backdrop-blur-sm">
                 <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl border border-[#c99a55]/20 bg-[#c99a55]/10 text-[#d1aa6b]">
                   <MailCheck className="h-6 w-6" />
                 </div>
@@ -356,13 +484,13 @@ export default function InquiryClient({ user }) {
                   return (
                     <div
                       key={inquiry._id}
-                      className="group relative overflow-hidden rounded-2xl border border-[#c99a55]/20 bg-[#062623]/70 p-6 shadow-lg backdrop-blur-sm transition-all duration-300 hover:border-[#c99a55]/40"
+                      className="group relative overflow-hidden rounded-2xl border border-[#c99a55]/20 bg-[#062623]/70 p-4 sm:p-6 shadow-lg backdrop-blur-sm transition-all duration-300 hover:border-[#c99a55]/40"
                     >
                       {/* Top bar of card */}
                       <div className="flex flex-col justify-between gap-3 border-b border-[#c99a55]/10 pb-4 sm:flex-row sm:items-center">
                         <div>
                           <div className="flex items-center gap-3">
-                            <h3 className="font-serif text-xl font-semibold text-[#f5f0e8]">
+                            <h3 className="font-serif text-lg sm:text-xl font-semibold text-[#f5f0e8]">
                               {inquiry.name}
                             </h3>
                             <span
@@ -444,11 +572,11 @@ export default function InquiryClient({ user }) {
                       </div>
 
                       {/* Message Content */}
-                      <div className="rounded-xl border border-[#c99a55]/10 bg-[#041a18]/70 p-4">
+                      <div className="rounded-xl border border-[#c99a55]/10 bg-[#041a18]/70 p-3.5 sm:p-4">
                         <p className="text-xs font-mono text-[#d1aa6b] uppercase tracking-wider mb-1">
                           Message:
                         </p>
-                        <p className="whitespace-pre-wrap text-sm leading-relaxed text-[#f5f0e8]/90">
+                        <p className="whitespace-pre-wrap text-xs sm:text-sm leading-relaxed text-[#f5f0e8]/90">
                           {inquiry.message}
                         </p>
                       </div>
