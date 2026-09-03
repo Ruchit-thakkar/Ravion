@@ -2,16 +2,20 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   ArrowRight,
   ArrowUpRight,
   ChevronLeft,
+  ChevronRight,
   Mail,
   Menu,
   MessageCircle,
+  MessageSquare,
   Phone,
   Sparkles,
   X,
+  Film,
 } from "lucide-react";
 import { gsap, ScrollTrigger, isReducedMotion } from "@/lib/animations/gsap";
 import { defaultAnimationConfig } from "@/lib/animations/config";
@@ -107,52 +111,325 @@ export function Header() {
   );
 }
 
-function Art({ sample = {} }) {
-  const image = sample.thumbnail;
+export function Art({ sample = {} }) {
+  const mediaList =
+    sample.media && sample.media.length > 0
+      ? sample.media
+      : sample.images && sample.images.length > 0
+      ? sample.images
+      : sample.thumbnail
+      ? [{ url: sample.thumbnail, fileType: "image" }]
+      : [];
+
+  if (mediaList.length > 0) {
+    return (
+      <div className="overflow-hidden rounded-2xl shadow-xl">
+        <ClientMediaCarousel media={mediaList} title={sample.title} />
+      </div>
+    );
+  }
+
   return (
-    <div
-      className="sample-art group-hover:scale-[1.02] relative isolate h-80 overflow-hidden bg-gradient-to-br from-[#c99a55] to-[#103733] transition-all duration-700 ease-out"
-      style={
-        image
-          ? {
-              backgroundImage: `linear-gradient(#082d2a30,#082d2a30),url(${image})`,
-              backgroundSize: "cover",
-              backgroundPosition: "center",
-            }
-          : undefined
-      }
-    >
-      <span className="absolute left-5 top-2 text-6xl font-serif text-white/65 transition-transform duration-500 group-hover:scale-105">
+    <div className="sample-art relative isolate h-96 overflow-hidden rounded-2xl bg-gradient-to-br from-[#c99a55] to-[#103733]">
+      <span className="absolute left-5 top-2 text-6xl font-serif text-white/65">
         R
       </span>
-      {!image && (
-        <div className="sample-shape absolute left-1/2 top-20 -translate-x-1/2 -rotate-12 transition-all duration-700 ease-out group-hover:rotate-6 group-hover:scale-110" />
+      <div className="sample-shape absolute left-1/2 top-20 -translate-x-1/2 -rotate-12" />
+    </div>
+  );
+}
+
+export function ClientMediaCarousel({ media = [], title = "" }) {
+  const [index, setIndex] = useState(0);
+  const [isHovered, setIsHovered] = useState(false);
+  const touchStartX = useRef(0);
+  const touchEndX = useRef(0);
+
+  const items =
+    Array.isArray(media) && media.length > 0
+      ? media
+      : [{ url: "/assets/sample-1.jpg", fileType: "image" }];
+
+  // Auto-slides every 3.5 seconds when not hovered/touched
+  useEffect(() => {
+    if (items.length <= 1 || isHovered) return;
+    const timer = setInterval(() => {
+      setIndex((prev) => (prev + 1) % items.length);
+    }, 3500);
+    return () => clearInterval(timer);
+  }, [items.length, isHovered]);
+
+  const handlePrev = (e) => {
+    e.stopPropagation();
+    e.preventDefault();
+    setIndex((prev) => (prev - 1 + items.length) % items.length);
+  };
+
+  const handleNext = (e) => {
+    e.stopPropagation();
+    e.preventDefault();
+    setIndex((prev) => (prev + 1) % items.length);
+  };
+
+  const handleTouchStart = (e) => {
+    setIsHovered(true);
+    touchStartX.current = e.targetTouches[0].clientX;
+  };
+
+  const handleTouchMove = (e) => {
+    touchEndX.current = e.targetTouches[0].clientX;
+  };
+
+  const handleTouchEnd = () => {
+    setIsHovered(false);
+    if (!touchStartX.current || !touchEndX.current) return;
+    const diff = touchStartX.current - touchEndX.current;
+    if (diff > 45) {
+      // Swiped left -> next
+      setIndex((prev) => (prev + 1) % items.length);
+    } else if (diff < -45) {
+      // Swiped right -> prev
+      setIndex((prev) => (prev - 1 + items.length) % items.length);
+    }
+    touchStartX.current = 0;
+    touchEndX.current = 0;
+  };
+
+  const currentItem = items[index] || items[0];
+  const isVideo =
+    currentItem?.fileType === "video" ||
+    (typeof currentItem?.url === "string" &&
+      (currentItem.url.endsWith(".mp4") ||
+        currentItem.url.endsWith(".mkv") ||
+        currentItem.url.endsWith(".webm") ||
+        currentItem.url.endsWith(".mov")));
+
+  return (
+    <div
+      className="relative aspect-[16/11] w-full overflow-hidden bg-[#082d2a]"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+    >
+      {isVideo ? (
+        <video
+          key={currentItem.url}
+          src={currentItem.url}
+          autoPlay
+          loop
+          muted
+          playsInline
+          className="h-full w-full object-cover"
+        />
+      ) : (
+        <img
+          key={currentItem.url}
+          src={currentItem.url}
+          alt={title || "Portfolio sample"}
+          className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+        />
+      )}
+
+      {/* Video Indicator */}
+      {isVideo && (
+        <span className="absolute left-3 top-3 z-10 flex items-center gap-1 rounded-full bg-black/60 px-2 py-0.5 text-[10px] font-mono text-white backdrop-blur-sm">
+          <Film size={12} className="text-[#d1aa6b]" />
+          <span>Video</span>
+        </span>
+      )}
+
+      {/* Desktop < > Navigation Arrows */}
+      {items.length > 1 && (
+        <>
+          <button
+            type="button"
+            onClick={handlePrev}
+            className="absolute left-2.5 top-1/2 -translate-y-1/2 z-20 hidden h-8 w-8 items-center justify-center rounded-full bg-black/70 text-white shadow-lg backdrop-blur-sm transition-all hover:bg-[#c99a55] hover:text-[#031513] active:scale-95 group-hover:flex"
+            aria-label="Previous image"
+          >
+            <ChevronLeft size={16} />
+          </button>
+          <button
+            type="button"
+            onClick={handleNext}
+            className="absolute right-2.5 top-1/2 -translate-y-1/2 z-20 hidden h-8 w-8 items-center justify-center rounded-full bg-black/70 text-white shadow-lg backdrop-blur-sm transition-all hover:bg-[#c99a55] hover:text-[#031513] active:scale-95 group-hover:flex"
+            aria-label="Next image"
+          >
+            <ChevronRight size={16} />
+          </button>
+
+          {/* Dots Indicator */}
+          <div className="absolute bottom-2.5 left-0 right-0 z-20 flex justify-center gap-1">
+            {items.map((_, dotIdx) => (
+              <span
+                key={dotIdx}
+                className={`h-1 rounded-full transition-all ${
+                  index === dotIdx ? "w-4 bg-[#c99a55]" : "w-1.5 bg-white/50"
+                }`}
+              />
+            ))}
+          </div>
+        </>
       )}
     </div>
   );
 }
 
+// SELECTED WORK Card on Home Page:
+// - Multi-media carousel with desktop < > controls, mobile swipe & auto-sliding
+// - On hover (and always on mobile): shows 4 Call to Action icons (Contact, Call, WhatsApp, Email)
+// - Displays category and short description
+// - Clicking card navigates to /samples
+export function SelectedWorkCard({ sample }) {
+  const router = useRouter();
+
+  const mediaList =
+    sample.media && sample.media.length > 0
+      ? sample.media
+      : sample.images && sample.images.length > 0
+      ? sample.images
+      : sample.thumbnail
+      ? [{ url: sample.thumbnail, fileType: "image" }]
+      : [];
+
+  const handleCardClick = () => {
+    router.push("/samples");
+  };
+
+  return (
+    <div
+      onClick={handleCardClick}
+      className="sample-card group relative block cursor-pointer overflow-hidden rounded-2xl border border-ink/10 bg-cream shadow-sm transition-all duration-500 hover:-translate-y-1.5 hover:border-[#c99a55]/40 hover:shadow-xl"
+    >
+      {/* Media carousel */}
+      <div className="relative overflow-hidden">
+        <ClientMediaCarousel media={mediaList} title={sample.title} />
+
+        {/* 4 Call To Action Icons Overlay: Hover on desktop, always visible on mobile */}
+        <div className="absolute right-3 top-3 z-30 flex items-center gap-1.5 opacity-95 transition-all duration-300 sm:opacity-0 sm:group-hover:opacity-100">
+          {/* 1. Contact Section */}
+          <a
+            href="#contact"
+            onClick={(e) => {
+              e.stopPropagation();
+              const el = document.getElementById("contact");
+              if (el) el.scrollIntoView({ behavior: "smooth" });
+            }}
+            className="flex h-8 w-8 items-center justify-center rounded-full bg-[#031513]/90 text-[#f5f0e8] shadow-md backdrop-blur-md transition-all hover:bg-[#c99a55] hover:text-[#031513] hover:scale-110 active:scale-95"
+            title="Let's Talk (Contact)"
+            aria-label="Go to contact section"
+          >
+            <MessageSquare size={14} />
+          </a>
+
+          {/* 2. Call */}
+          <a
+            href="tel:+917990774831"
+            onClick={(e) => e.stopPropagation()}
+            className="flex h-8 w-8 items-center justify-center rounded-full bg-[#031513]/90 text-[#f5f0e8] shadow-md backdrop-blur-md transition-all hover:bg-[#c99a55] hover:text-[#031513] hover:scale-110 active:scale-95"
+            title="Direct Call (+91 79907 74831)"
+            aria-label="Call Ravion"
+          >
+            <Phone size={14} />
+          </a>
+
+          {/* 3. WhatsApp */}
+          <a
+            href="https://wa.me/917990774831"
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={(e) => e.stopPropagation()}
+            className="flex h-8 w-8 items-center justify-center rounded-full bg-[#031513]/90 text-emerald-400 shadow-md backdrop-blur-md transition-all hover:bg-emerald-500 hover:text-white hover:scale-110 active:scale-95"
+            title="Chat on WhatsApp"
+            aria-label="WhatsApp Ravion"
+          >
+            <MessageCircle size={14} />
+          </a>
+
+          {/* 4. Email */}
+          <a
+            href="mailto:ruchitthakkar12@gmail.com"
+            onClick={(e) => {
+              e.stopPropagation();
+              window.location.href = "mailto:ruchitthakkar12@gmail.com";
+            }}
+            className="flex h-8 w-8 items-center justify-center rounded-full bg-[#031513]/90 text-[#f5f0e8] shadow-md backdrop-blur-md transition-all hover:bg-[#c99a55] hover:text-[#031513] hover:scale-110 active:scale-95"
+            title="Email us (ruchitthakkar12@gmail.com)"
+            aria-label="Email Ravion"
+          >
+            <Mail size={14} />
+          </a>
+        </div>
+      </div>
+
+      {/* Card Info */}
+      <div className="relative p-5">
+        <div className="flex items-center justify-between">
+          <span className="font-mono text-[10px] tracking-wider text-[#8b714e] uppercase">
+            {sample.category}
+          </span>
+          <ArrowUpRight
+            className="text-ink/50 transition-all duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-gold"
+            size={17}
+          />
+        </div>
+
+        <h3 className="mt-1.5 font-serif text-2xl font-semibold transition-colors duration-300 group-hover:text-gold">
+          {sample.title}
+        </h3>
+
+        <p className="mt-2 text-xs leading-relaxed text-ink/70 line-clamp-2">
+          {sample.description || "Distinctive digital experience and visual project by Ravion."}
+        </p>
+
+        <div className="mt-4 flex items-center justify-between border-t border-ink/10 pt-3">
+          <span className="font-mono text-[10px] text-ink/40">
+            Click to view all work
+          </span>
+          <span className="font-mono text-xs font-semibold text-gold">
+            Explore →
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Card for /samples page
 function Card({ sample }) {
+  const mediaList =
+    sample.media && sample.media.length > 0
+      ? sample.media
+      : sample.images && sample.images.length > 0
+      ? sample.images
+      : sample.thumbnail
+      ? [{ url: sample.thumbnail, fileType: "image" }]
+      : [];
+
   return (
     <Link
       href={`/samples/${sample.slug}`}
-      className="sample-card group block transition-transform duration-500 hover:-translate-y-1.5"
+      className="sample-card group block overflow-hidden rounded-2xl border border-ink/10 bg-cream shadow-sm transition-all duration-500 hover:-translate-y-1.5 hover:border-[#c99a55]/40 hover:shadow-xl"
     >
-      <Art sample={sample} />
-      <div className="relative py-4">
-        <span className="font-mono text-[10px] tracking-wider text-[#8b714e]">
-          {sample.category}
-        </span>
-        <h3 className="mt-1 font-serif text-2xl transition-colors duration-300 group-hover:text-[#8b714e]">
+      <ClientMediaCarousel media={mediaList} title={sample.title} />
+      <div className="relative p-5">
+        <div className="flex items-center justify-between">
+          <span className="font-mono text-[10px] tracking-wider text-[#8b714e] uppercase">
+            {sample.category}
+          </span>
+          <ArrowUpRight
+            className="text-ink/50 transition-all duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-gold"
+            size={17}
+          />
+        </div>
+        <h3 className="mt-1.5 font-serif text-2xl font-semibold transition-colors duration-300 group-hover:text-gold">
           {sample.title}
         </h3>
-        <p className="text-sm text-ink/60 line-clamp-2">
+        <p className="mt-2 text-xs leading-relaxed text-ink/70 line-clamp-2">
           {sample.description || "Ravion project"}
         </p>
-        <ArrowUpRight
-          className="absolute right-1 top-8 text-ink/70 transition-all duration-300 group-hover:translate-x-1 group-hover:-translate-y-1 group-hover:text-[#8b714e]"
-          size={18}
-        />
       </div>
     </Link>
   );
@@ -821,10 +1098,10 @@ export function Home() {
             </Link>
           </div>
 
-          <div className="grid gap-5 md:grid-cols-3">
-            {samples.slice(0, 6).map((s) => (
-              <div className="work-card-item" key={s._id}>
-                <Card sample={s} />
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {samples.slice(0, 5).map((s) => (
+              <div className="work-card-item" key={s._id || s.slug}>
+                <SelectedWorkCard sample={s} />
               </div>
             ))}
           </div>
@@ -845,10 +1122,21 @@ export function Home() {
 
 export function Samples() {
   const [samples, setSamples] = useState([]);
+  const [categoriesList, setCategoriesList] = useState(["All"]);
   const [filter, setFilter] = useState("All");
   const samplesRef = useRef(null);
 
   useEffect(() => {
+    // Dynamic categories by admin side
+    api("/api/categories")
+      .then((data) => {
+        const catNames = (data.categories || []).map((c) => c.name);
+        if (catNames.length > 0) {
+          setCategoriesList(["All", ...catNames]);
+        }
+      })
+      .catch(() => {});
+
     api("/api/samples")
       .then(setSamples)
       .catch(() => setSamples([]));
@@ -933,7 +1221,7 @@ export function Samples() {
         </div>
 
         <div className="my-12 flex flex-wrap gap-2">
-          {categories.map((c) => (
+          {categoriesList.map((c) => (
             <button
               onClick={() => setFilter(c)}
               className={`rounded-full border border-ink/20 px-4 py-2 text-sm transition-all duration-300 hover:border-ink ${
@@ -948,7 +1236,7 @@ export function Samples() {
 
         <div className="grid gap-x-5 gap-y-9 md:grid-cols-3">
           {list.map((s) => (
-            <div className="samples-grid-item" key={s._id}>
+            <div className="samples-grid-item" key={s._id || s.slug}>
               <Card sample={s} />
             </div>
           ))}

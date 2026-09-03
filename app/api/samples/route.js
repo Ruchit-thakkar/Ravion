@@ -1,4 +1,34 @@
 import { NextResponse } from "next/server";
-import { db, missing } from "@/lib/server";
+import { getSamplesCollection } from "@/lib/db";
+
 export const runtime = "nodejs";
-export async function GET(request) { const absent = missing(["MONGODB_URI"]); if (absent.length) return NextResponse.json({ error: `Missing: ${absent.join(", ")}` }, { status: 503 }); const category = new URL(request.url).searchParams.get("category"); const data = await (await db()).collection("samples").find(category ? { category, status: "Published" } : { status: "Published" }).sort({ createdAt: -1 }).toArray(); return NextResponse.json(data); }
+
+export async function GET(request) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const category = searchParams.get("category");
+    const limitParam = searchParams.get("limit");
+
+    const samplesCol = await getSamplesCollection();
+
+    const query = { status: "Published" };
+    if (category && category !== "All") {
+      query.category = category;
+    }
+
+    let cursor = samplesCol.find(query).sort({ createdAt: -1 });
+
+    if (limitParam) {
+      const limit = parseInt(limitParam, 10);
+      if (!isNaN(limit) && limit > 0) {
+        cursor = cursor.limit(limit);
+      }
+    }
+
+    const data = await cursor.toArray();
+    return NextResponse.json(data);
+  } catch (error) {
+    console.error("Public samples GET error:", error);
+    return NextResponse.json({ error: "Failed to fetch samples." }, { status: 500 });
+  }
+}

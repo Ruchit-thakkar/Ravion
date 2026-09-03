@@ -108,8 +108,8 @@ export default function InquiryClient({ user }) {
   const navItems = [
     { name: "Dashboard", href: "/admin", icon: LayoutDashboard, active: false },
     { name: "Inquiry", href: "/admin/inquiry", icon: MailCheck, active: true },
-    { name: "Samples", href: "#", icon: FolderKanban, active: false, badge: "Phase 2" },
-    { name: "Categories", href: "#", icon: Tags, active: false, badge: "Phase 2" },
+    { name: "Samples", href: "/admin/samples", icon: FolderKanban, active: false },
+    { name: "Categories", href: "/admin/categories", icon: Tags, active: false },
     { name: "Services", href: "#", icon: Briefcase, active: false, badge: "Phase 2" },
     { name: "Settings", href: "#", icon: Settings, active: false, badge: "Phase 2" },
   ];

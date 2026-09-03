@@ -49,8 +49,8 @@ export default function DashboardClient({ user }) {
   const navItems = [
     { name: "Dashboard", href: "/admin", icon: LayoutDashboard, active: true },
     { name: "Inquiry", href: "/admin/inquiry", icon: MailCheck, active: false },
-    { name: "Samples", href: "#", icon: FolderKanban, active: false, badge: "Phase 2" },
-    { name: "Categories", href: "#", icon: Tags, active: false, badge: "Phase 2" },
+    { name: "Samples", href: "/admin/samples", icon: FolderKanban, active: false },
+    { name: "Categories", href: "/admin/categories", icon: Tags, active: false },
     { name: "Services", href: "#", icon: Briefcase, active: false, badge: "Phase 2" },
     { name: "Settings", href: "#", icon: Settings, active: false, badge: "Phase 2" },
   ];

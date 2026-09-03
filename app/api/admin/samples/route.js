@@ -1,5 +1,97 @@
 import { NextResponse } from "next/server";
-import { db, missing, requireAdmin, slugify } from "@/lib/server";
+import { getSamplesCollection } from "@/lib/db";
+import { requireAdminSession } from "@/lib/auth";
+
 export const runtime = "nodejs";
-export async function GET(request) { try { requireAdmin(request); const data = await (await db()).collection("samples").find({}).sort({ createdAt: -1 }).toArray(); return NextResponse.json(data); } catch { return NextResponse.json({ error: "Unauthorized" }, { status: 401 }); } }
-export async function POST(request) { try { requireAdmin(request); if (missing(["MONGODB_URI"]).length) return NextResponse.json({ error: "MongoDB is not configured." }, { status: 503 }); const { title, category, description = "", status = "Draft", images = [] } = await request.json(); if (!title || !category) return NextResponse.json({ error: "Title and category are required." }, { status: 400 }); const collection = (await db()).collection("samples"); let slug = slugify(title), n = 2; while (await collection.findOne({ slug })) slug = `${slugify(title)}-${n++}`; const item = { title, slug, category, description, status, images, thumbnail: images[0]?.url || "", createdAt: new Date(), updatedAt: new Date() }; await collection.insertOne(item); return NextResponse.json(item, { status: 201 }); } catch (error) { return NextResponse.json({ error: error.message === "Unauthorized" ? error.message : "Could not save sample." }, { status: error.message === "Unauthorized" ? 401 : 500 }); } }
+
+function slugify(text) {
+  return String(text || "")
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+export async function GET(request) {
+  try {
+    const admin = await requireAdminSession(request);
+    if (!admin) {
+      return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+    }
+
+    const samplesCol = await getSamplesCollection();
+    const samples = await samplesCol.find({}).sort({ createdAt: -1 }).toArray();
+    return NextResponse.json(samples);
+  } catch (error) {
+    console.error("Admin samples GET error:", error);
+    return NextResponse.json({ error: "Could not fetch samples." }, { status: 500 });
+  }
+}
+
+export async function POST(request) {
+  try {
+    const admin = await requireAdminSession(request);
+    if (!admin) {
+      return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+    }
+
+    const body = await request.json();
+    const {
+      title,
+      category,
+      description = "",
+      status = "Published",
+      media = [],
+      images = [], // backward compatibility if passed
+    } = body;
+
+    const trimmedTitle = (title || "").trim();
+    const trimmedCategory = (category || "").trim();
+
+    if (!trimmedTitle || !trimmedCategory) {
+      return NextResponse.json(
+        { error: "Title and Category are required." },
+        { status: 400 }
+      );
+    }
+
+    const combinedMedia = media.length > 0 ? media : images;
+
+    const samplesCol = await getSamplesCollection();
+    let slug = slugify(trimmedTitle);
+    let n = 2;
+    let baseSlug = slug;
+    while (await samplesCol.findOne({ slug })) {
+      slug = `${baseSlug}-${n++}`;
+    }
+
+    const primaryThumbnail =
+      combinedMedia[0]?.thumbnailUrl || combinedMedia[0]?.url || "";
+
+    const newSample = {
+      title: trimmedTitle,
+      slug,
+      category: trimmedCategory,
+      description: description.trim(),
+      status: status === "Draft" ? "Draft" : "Published",
+      media: combinedMedia,
+      images: combinedMedia, // keep images for backward compatibility
+      thumbnail: primaryThumbnail,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    const result = await samplesCol.insertOne(newSample);
+
+    return NextResponse.json(
+      { ...newSample, _id: result.insertedId },
+      { status: 201 }
+    );
+  } catch (error) {
+    console.error("Admin samples POST error:", error);
+    return NextResponse.json(
+      { error: error.message || "Could not save sample." },
+      { status: 500 }
+    );
+  }
+}
