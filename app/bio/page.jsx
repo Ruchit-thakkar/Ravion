@@ -12,7 +12,7 @@ export default function Page() {
       <div className="w-full max-w-md text-center">
         <img
           className="mx-auto w-48 bg-cream p-2 rounded"
-          src="/assets/ravion-logo.png"
+          src="/assets/ravion_logo_svg-01.svg"
           alt="Ravion"
         />
         <p className="mt-6 font-mono text-xs tracking-[.25em] text-[#dfb77b]">

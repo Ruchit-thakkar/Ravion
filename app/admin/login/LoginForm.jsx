@@ -55,7 +55,7 @@ export default function LoginForm() {
         <div className="mb-8 text-center">
           <div className="mb-4 inline-flex items-center justify-center">
             <img
-              src="/assets/ravion-logo.png"
+              src="/assets/ravion_logo_svg-01.svg"
               alt="RAVION"
               className="h-10 w-auto brightness-0 invert"
             />

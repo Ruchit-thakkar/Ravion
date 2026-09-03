@@ -200,7 +200,7 @@ export default function CategoriesClient({ user }) {
               className="inline-block"
             >
               <img
-                src="/assets/ravion-logo.png"
+                src="/assets/ravion_logo_svg-01.svg"
                 alt="RAVION"
                 className="h-8 w-auto brightness-0 invert"
               />
@@ -291,7 +291,7 @@ export default function CategoriesClient({ user }) {
         <div className="mb-8">
           <Link href="/admin" className="inline-block">
             <img
-              src="/assets/ravion-logo.png"
+              src="/assets/ravion_logo_svg-01.svg"
               alt="RAVION"
               className="h-8 w-auto brightness-0 invert"
             />
