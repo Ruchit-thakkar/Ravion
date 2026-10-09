@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
@@ -17,17 +17,37 @@ import {
   Sparkles,
   Menu,
   X,
+  ArrowRight,
+  Plus,
 } from "lucide-react";
 
 export default function DashboardClient({ user }) {
   const router = useRouter();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [metrics, setMetrics] = useState({
+    inquiries: { total: 0, new: 0 },
+    samples: { total: 0, published: 0 },
+    categories: { total: 0 },
+    loading: true,
+  });
 
-  // Extract display name from email (e.g. ruchit@gmail.com -> Ruchit)
   const displayName = user?.email
     ? user.email.split("@")[0].charAt(0).toUpperCase() + user.email.split("@")[0].slice(1)
     : "Admin";
+
+  useEffect(() => {
+    fetch("/api/admin/metrics")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data) {
+          setMetrics({ ...data, loading: false });
+        } else {
+          setMetrics((prev) => ({ ...prev, loading: false }));
+        }
+      })
+      .catch(() => setMetrics((prev) => ({ ...prev, loading: false })));
+  }, []);
 
   const handleLogout = async () => {
     try {
@@ -39,7 +59,6 @@ export default function DashboardClient({ user }) {
       router.refresh();
     } catch (err) {
       console.error("Logout error:", err);
-      // Fallback redirect
       window.location.href = "/admin/login";
     } finally {
       setIsLoggingOut(false);
@@ -72,7 +91,6 @@ export default function DashboardClient({ user }) {
           mobileMenuOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
-        {/* Mobile Header & Close Button */}
         <div className="mb-8 flex items-center justify-between">
           <div>
             <Link
@@ -101,7 +119,6 @@ export default function DashboardClient({ user }) {
           </button>
         </div>
 
-        {/* Mobile Navigation Links */}
         <nav className="flex-1 space-y-2 overflow-y-auto">
           {navItems.map((item) => {
             const Icon = item.icon;
@@ -143,7 +160,6 @@ export default function DashboardClient({ user }) {
           })}
         </nav>
 
-        {/* Mobile Bottom Utility Links */}
         <div className="border-t border-[#c99a55]/15 pt-5 space-y-3">
           <Link
             href="/"
@@ -171,7 +187,6 @@ export default function DashboardClient({ user }) {
 
       {/* Desktop Permanent Sidebar (> 768px) */}
       <aside className="hidden w-64 flex-col border-r border-[#c99a55]/15 bg-[#041d1a]/80 p-6 backdrop-blur-xl md:flex">
-        {/* Brand */}
         <div className="mb-8">
           <Link href="/admin" className="inline-block">
             <img
@@ -186,7 +201,6 @@ export default function DashboardClient({ user }) {
           </div>
         </div>
 
-        {/* Navigation links */}
         <nav className="flex-1 space-y-1.5">
           {navItems.map((item) => {
             const Icon = item.icon;
@@ -227,7 +241,6 @@ export default function DashboardClient({ user }) {
           })}
         </nav>
 
-        {/* Bottom utility links */}
         <div className="border-t border-[#c99a55]/15 pt-5 space-y-3">
           <Link
             href="/"
@@ -258,7 +271,6 @@ export default function DashboardClient({ user }) {
         {/* Top Header Bar */}
         <header className="sticky top-0 z-20 flex h-20 items-center justify-between border-b border-[#c99a55]/15 bg-[#031513]/90 px-4 backdrop-blur-md sm:px-6 md:px-10">
           <div className="flex items-center gap-3">
-            {/* Mobile Hamburger Menu Button (≥ 44×44px click area, clearly visible on ≤ 768px) */}
             <button
               onClick={() => setMobileMenuOpen(true)}
               className="flex h-11 w-11 min-h-[44px] min-w-[44px] items-center justify-center rounded-xl border border-[#c99a55]/30 bg-[#062623] text-[#d1aa6b] shadow-sm transition-all hover:border-[#c99a55] hover:bg-[#0a3531] active:scale-95 md:hidden"
@@ -272,13 +284,12 @@ export default function DashboardClient({ user }) {
                 RAVION ADMIN
               </p>
               <h1 className="font-serif text-lg font-semibold text-[#f5f0e8] sm:text-xl md:text-2xl">
-                Dashboard
+                Dashboard Overview
               </h1>
             </div>
           </div>
 
           <div className="flex items-center gap-3 sm:gap-4">
-            {/* User status badge */}
             <div className="hidden text-right sm:block">
               <p className="text-xs font-medium text-[#f5f0e8]">
                 Welcome, <span className="text-[#d1aa6b]">{displayName}</span>
@@ -288,7 +299,6 @@ export default function DashboardClient({ user }) {
               </p>
             </div>
 
-            {/* Header Logout Button */}
             <button
               onClick={handleLogout}
               disabled={isLoggingOut}
@@ -313,54 +323,151 @@ export default function DashboardClient({ user }) {
               <div className="relative z-10">
                 <div className="inline-flex items-center gap-2 rounded-full border border-[#c99a55]/30 bg-[#c99a55]/10 px-3 py-1 font-mono text-[10px] font-medium tracking-wider text-[#d1aa6b] uppercase">
                   <Sparkles className="h-3 w-3" />
-                  Phase 1 Authentication Active
+                  Authenticated Admin Session
                 </div>
                 <h2 className="mt-4 font-serif text-2xl font-semibold text-[#f5f0e8] sm:text-3xl md:text-4xl">
                   Welcome, <span className="text-[#d1aa6b]">{displayName}</span>
                 </h2>
                 <p className="mt-2 max-w-xl text-xs sm:text-sm leading-relaxed text-[#f5f0e8]/70">
-                  Your administrator session is authenticated and protected with HttpOnly JWT cookies and MongoDB bcrypt verification.
+                  Manage portfolio work, service categories, and incoming client inquiries from one central hub.
                 </p>
               </div>
             </div>
 
-            {/* Admin Dashboard Placeholder Card */}
-            <div className="rounded-2xl border border-[#c99a55]/20 bg-[#062623]/60 p-6 text-center shadow-xl backdrop-blur-sm sm:p-12 md:p-16">
-              <div className="mx-auto mb-6 flex h-14 w-14 sm:h-16 sm:w-16 items-center justify-center rounded-2xl border border-[#c99a55]/30 bg-[#c99a55]/10 text-[#d1aa6b]">
-                <Shield className="h-7 w-7 sm:h-8 sm:w-8" />
-              </div>
-              <h3 className="font-serif text-xl sm:text-2xl md:text-3xl font-semibold text-[#f5f0e8]">
-                Admin Dashboard
-              </h3>
-              <p className="mx-auto mt-3 max-w-md text-xs sm:text-sm text-[#f5f0e8]/60">
-                More admin features (Samples management, ImageKit uploads, Categories, Services, Inquiries, and Settings) will be added in future phases.
-              </p>
+            {/* Real-time Dynamic Metrics Cards Grid */}
+            <div className="grid gap-4 sm:grid-cols-3">
+              {/* Card 1: Inquiries */}
+              <Link
+                href="/admin/inquiry"
+                className="group relative overflow-hidden rounded-2xl border border-[#c99a55]/20 bg-[#062623]/70 p-6 shadow-lg transition-all hover:-translate-y-1 hover:border-[#c99a55] hover:shadow-xl"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="font-mono text-xs tracking-wider text-[#d1aa6b] uppercase">
+                    Client Inquiries
+                  </span>
+                  <MailCheck className="h-5 w-5 text-[#d1aa6b] transition-transform group-hover:scale-110" />
+                </div>
+                <div className="mt-4 flex items-baseline gap-2">
+                  <span className="font-serif text-4xl font-semibold text-[#f5f0e8]">
+                    {metrics.loading ? "…" : metrics.inquiries?.total ?? 0}
+                  </span>
+                  {metrics.inquiries?.new > 0 && (
+                    <span className="rounded-full bg-emerald-500/20 px-2 py-0.5 font-mono text-[11px] text-emerald-400">
+                      {metrics.inquiries.new} new
+                    </span>
+                  )}
+                </div>
+                <p className="mt-2 text-xs text-[#f5f0e8]/60">
+                  Incoming contact submissions
+                </p>
+                <div className="mt-4 flex items-center gap-1 font-mono text-xs text-[#d1aa6b]">
+                  <span>Open inbox</span>
+                  <ArrowRight size={13} className="transition-transform group-hover:translate-x-1" />
+                </div>
+              </Link>
 
-              {/* Status checklist */}
-              <div className="mx-auto mt-8 max-w-md rounded-xl border border-[#c99a55]/15 bg-[#041a18]/70 p-4 sm:p-5 text-left text-[11px] sm:text-xs font-mono">
-                <div className="mb-2.5 flex items-center justify-between border-b border-[#c99a55]/10 pb-2 text-[#d1aa6b]">
-                  <span>SYSTEM STATUS</span>
-                  <span className="rounded bg-emerald-500/20 px-2 py-0.5 text-emerald-400">
-                    ONLINE
+              {/* Card 2: Samples */}
+              <Link
+                href="/admin/samples"
+                className="group relative overflow-hidden rounded-2xl border border-[#c99a55]/20 bg-[#062623]/70 p-6 shadow-lg transition-all hover:-translate-y-1 hover:border-[#c99a55] hover:shadow-xl"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="font-mono text-xs tracking-wider text-[#d1aa6b] uppercase">
+                    Portfolio Projects
+                  </span>
+                  <FolderKanban className="h-5 w-5 text-[#d1aa6b] transition-transform group-hover:scale-110" />
+                </div>
+                <div className="mt-4 flex items-baseline gap-2">
+                  <span className="font-serif text-4xl font-semibold text-[#f5f0e8]">
+                    {metrics.loading ? "…" : metrics.samples?.total ?? 0}
+                  </span>
+                  <span className="rounded-full bg-[#c99a55]/20 px-2 py-0.5 font-mono text-[11px] text-[#d1aa6b]">
+                    {metrics.samples?.published ?? 0} live
                   </span>
                 </div>
-                <div className="space-y-2 text-[#f5f0e8]/70">
-                  <div className="flex justify-between">
-                    <span>Admin User:</span>
-                    <span className="text-[#f5f0e8] truncate max-w-[200px]">{user?.email}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Role:</span>
-                    <span className="text-[#d1aa6b] uppercase">{user?.role}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Session Storage:</span>
-                    <span className="text-emerald-400">Secure HttpOnly Cookie</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Password Hash:</span>
-                    <span className="text-emerald-400">Bcrypt (Salt Rounds 10)</span>
-                  </div>
+                <p className="mt-2 text-xs text-[#f5f0e8]/60">
+                  Published & draft showcases
+                </p>
+                <div className="mt-4 flex items-center gap-1 font-mono text-xs text-[#d1aa6b]">
+                  <span>Manage work</span>
+                  <ArrowRight size={13} className="transition-transform group-hover:translate-x-1" />
+                </div>
+              </Link>
+
+              {/* Card 3: Categories */}
+              <Link
+                href="/admin/categories"
+                className="group relative overflow-hidden rounded-2xl border border-[#c99a55]/20 bg-[#062623]/70 p-6 shadow-lg transition-all hover:-translate-y-1 hover:border-[#c99a55] hover:shadow-xl"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="font-mono text-xs tracking-wider text-[#d1aa6b] uppercase">
+                    Service Categories
+                  </span>
+                  <Tags className="h-5 w-5 text-[#d1aa6b] transition-transform group-hover:scale-110" />
+                </div>
+                <div className="mt-4 flex items-baseline gap-2">
+                  <span className="font-serif text-4xl font-semibold text-[#f5f0e8]">
+                    {metrics.loading ? "…" : metrics.categories?.total ?? 0}
+                  </span>
+                </div>
+                <p className="mt-2 text-xs text-[#f5f0e8]/60">
+                  Service taxonomy & tags
+                </p>
+                <div className="mt-4 flex items-center gap-1 font-mono text-xs text-[#d1aa6b]">
+                  <span>Edit categories</span>
+                  <ArrowRight size={13} className="transition-transform group-hover:translate-x-1" />
+                </div>
+              </Link>
+            </div>
+
+            {/* Quick Actions Bar */}
+            <div className="flex flex-wrap items-center gap-3">
+              <Link
+                href="/admin/samples"
+                className="inline-flex items-center gap-2 rounded-xl bg-[#c99a55] px-4 py-2.5 text-xs font-semibold text-[#031513] transition-all hover:bg-white active:scale-95"
+              >
+                <Plus size={15} />
+                <span>Add New Project</span>
+              </Link>
+              <Link
+                href="/admin/inquiry"
+                className="inline-flex items-center gap-2 rounded-xl border border-[#c99a55]/30 bg-[#062623] px-4 py-2.5 text-xs font-medium text-[#f5f0e8] transition-all hover:border-[#c99a55] hover:bg-[#0a3531]"
+              >
+                <MailCheck size={15} className="text-[#d1aa6b]" />
+                <span>View Recent Inquiries</span>
+              </Link>
+            </div>
+
+            {/* System Status Checklist Card */}
+            <div className="rounded-2xl border border-[#c99a55]/20 bg-[#062623]/60 p-6 shadow-xl backdrop-blur-sm sm:p-8">
+              <div className="mb-4 flex items-center justify-between border-b border-[#c99a55]/15 pb-3">
+                <div className="flex items-center gap-2.5">
+                  <Shield className="h-5 w-5 text-[#d1aa6b]" />
+                  <h3 className="font-serif text-lg font-semibold text-[#f5f0e8]">
+                    System Security & Configuration
+                  </h3>
+                </div>
+                <span className="rounded bg-emerald-500/20 px-2.5 py-0.5 font-mono text-[11px] text-emerald-400">
+                  SECURE & ACTIVE
+                </span>
+              </div>
+
+              <div className="grid gap-3 text-xs font-mono sm:grid-cols-2">
+                <div className="flex justify-between rounded-lg bg-[#041a18]/60 p-3">
+                  <span className="text-[#f5f0e8]/60">Session Storage:</span>
+                  <span className="text-emerald-400">HttpOnly Signed JWT</span>
+                </div>
+                <div className="flex justify-between rounded-lg bg-[#041a18]/60 p-3">
+                  <span className="text-[#f5f0e8]/60">Password Security:</span>
+                  <span className="text-emerald-400">Bcrypt Salt 10</span>
+                </div>
+                <div className="flex justify-between rounded-lg bg-[#041a18]/60 p-3">
+                  <span className="text-[#f5f0e8]/60">Cloud Media Storage:</span>
+                  <span className="text-emerald-400">ImageKit CDN</span>
+                </div>
+                <div className="flex justify-between rounded-lg bg-[#041a18]/60 p-3">
+                  <span className="text-[#f5f0e8]/60">Database:</span>
+                  <span className="text-emerald-400">MongoDB Atlas</span>
                 </div>
               </div>
             </div>

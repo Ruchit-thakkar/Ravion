@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ArrowUpRight, Mail, MessageCircle, Phone } from "lucide-react";
+import { siteConfig } from "@/lib/site-config";
 
 export const metadata = {
   title: "Ravion — Bio & Links",
@@ -13,7 +14,7 @@ export default function Page() {
         <img
           className="mx-auto w-48 bg-cream p-2 rounded"
           src="/assets/ravion_logo_svg-01.svg"
-          alt="Ravion"
+          alt={siteConfig.name}
         />
         <p className="mt-6 font-mono text-xs tracking-[.25em] text-[#dfb77b]">
           BUILD · CREATE · INNOVATE
@@ -39,18 +40,18 @@ export default function Page() {
 
           <a
             className="flex items-center justify-between bg-white p-4 text-ink transition-transform hover:-translate-y-0.5 active:scale-[0.99]"
-            href="tel:+917990774831"
+            href={`tel:${siteConfig.contact.phoneRaw}`}
           >
             <span className="flex items-center gap-2.5 font-medium">
               <Phone size={17} className="text-[#082d2a]" />
-              Direct Call (+91 79907 74831)
+              Direct Call ({siteConfig.contact.phone})
             </span>
             <ArrowUpRight size={17} />
           </a>
 
           <a
             className="flex items-center justify-between bg-white p-4 text-ink transition-transform hover:-translate-y-0.5 active:scale-[0.99]"
-            href="https://wa.me/917990774831"
+            href={siteConfig.contact.whatsappUrl}
             target="_blank"
             rel="noopener noreferrer"
           >
@@ -63,11 +64,11 @@ export default function Page() {
 
           <a
             className="flex items-center justify-between bg-white p-4 text-ink transition-transform hover:-translate-y-0.5 active:scale-[0.99]"
-            href="mailto:ruchitthakkar12@gmail.com"
+            href={`mailto:${siteConfig.contact.email}`}
           >
             <span className="flex items-center gap-2.5 font-medium">
               <Mail size={17} className="text-[#c99a55]" />
-              Email Us (ruchitthakkar12@gmail.com)
+              Email Us ({siteConfig.contact.email})
             </span>
             <ArrowUpRight size={17} />
           </a>

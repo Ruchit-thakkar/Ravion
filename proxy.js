@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-export function proxy(request) {
+export function middleware(request) {
   const { pathname } = request.nextUrl;
   const token = request.cookies.get("ravion_admin_token")?.value;
 
@@ -8,6 +8,7 @@ export function proxy(request) {
   if (pathname.startsWith("/admin") && pathname !== "/admin/login") {
     if (!token) {
       const loginUrl = new URL("/admin/login", request.url);
+      loginUrl.searchParams.set("from", pathname);
       return NextResponse.redirect(loginUrl);
     }
   }
@@ -21,8 +22,11 @@ export function proxy(request) {
   return NextResponse.next();
 }
 
-export default proxy;
+export const proxy = middleware;
+export default middleware;
 
 export const config = {
-  matcher: ["/admin/:path*"],
+  matcher: [
+    "/admin/:path*",
+  ],
 };

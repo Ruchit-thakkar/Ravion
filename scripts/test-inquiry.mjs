@@ -1,4 +1,4 @@
-import { getInquiriesCollection } from "./lib/db.js";
+import { getInquiriesCollection } from "../lib/db.js";
 import dotenv from "dotenv";
 
 dotenv.config();

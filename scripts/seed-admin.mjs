@@ -20,8 +20,8 @@ async function seed() {
     const db = client.db(dbName);
     const admins = db.collection("admins");
 
-    const email = "ruchit@gmail.com";
-    const password = "ruchit@123";
+    const email = (process.env.ADMIN_EMAIL || "ruchit@gmail.com").toLowerCase().trim();
+    const password = process.env.ADMIN_PASSWORD || "ruchit@123";
 
     const existing = await admins.findOne({ email });
     const passwordHash = await bcrypt.hash(password, 10);
