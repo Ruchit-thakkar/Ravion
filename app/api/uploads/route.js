@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import ImageKit from "imagekit";
 import { requireAdminSession } from "@/lib/auth";
+import { getMediaCollection } from "@/lib/db";
 
 export const runtime = "nodejs";
 
@@ -162,9 +163,31 @@ export async function POST(request) {
           name: file.name,
           fileType: videoType ? "video" : "image",
           thumbnailUrl: uploadResult.thumbnailUrl || uploadResult.url,
+          size: file.size,
+          mimeType: file.type,
         };
       })
     );
+
+    // Save metadata to media collection for Central Media Library
+    try {
+      const mediaCol = await getMediaCollection();
+      const mediaDocs = uploadedMedia.map((m) => ({
+        fileId: m.fileId,
+        name: m.name,
+        url: m.url,
+        thumbnailUrl: m.thumbnailUrl,
+        fileType: m.fileType,
+        size: m.size,
+        mimeType: m.mimeType,
+        tags: [m.fileType],
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      }));
+      await mediaCol.insertMany(mediaDocs);
+    } catch (dbErr) {
+      console.warn("Could not record media assets in DB:", dbErr.message);
+    }
 
     return NextResponse.json(
       { media: uploadedMedia, images: uploadedMedia },

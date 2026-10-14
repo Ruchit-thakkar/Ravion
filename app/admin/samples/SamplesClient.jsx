@@ -8,7 +8,6 @@ import {
   MailCheck,
   FolderKanban,
   Tags,
-  Briefcase,
   Settings,
   Shield,
   LogOut,
@@ -26,27 +25,22 @@ import {
   Film,
   Image as ImageIcon,
   CheckCircle,
+  Sparkles,
+  Package,
+  Link2,
 } from "lucide-react";
 
-// Reusable Multi-Media Card Carousel with Desktop < > buttons, Mobile Touch Swipe, and Auto-sliding
+import AdminLayout from "@/components/admin/AdminLayout";
+
+// Reusable Multi-Media Card Carousel with Desktop < > buttons and Mobile Touch Swipe
 export function MediaCarousel({ media = [], title = "" }) {
   const [index, setIndex] = useState(0);
-  const [isHovered, setIsHovered] = useState(false);
   const touchStartX = useRef(0);
   const touchEndX = useRef(0);
 
   const items = Array.isArray(media) && media.length > 0
     ? media
     : [{ url: "/assets/sample-1.jpg", fileType: "image" }];
-
-  // Auto-slides every 3.5 seconds when not hovered
-  useEffect(() => {
-    if (items.length <= 1 || isHovered) return;
-    const interval = setInterval(() => {
-      setIndex((prev) => (prev + 1) % items.length);
-    }, 3500);
-    return () => clearInterval(interval);
-  }, [items.length, isHovered]);
 
   const handlePrev = (e) => {
     e.stopPropagation();
@@ -393,11 +387,14 @@ export default function SamplesClient({ user }) {
 
   const navItems = [
     { name: "Dashboard", href: "/admin", icon: LayoutDashboard, active: false },
+    { name: "Bio Page", href: "/admin/bio", icon: Sparkles, active: false },
+    { name: "Products", href: "/admin/products", icon: Package, active: false },
+    { name: "Links", href: "/admin/links", icon: Link2, active: false },
+    { name: "Categories", href: "/admin/categories", icon: Tags, active: false },
+    { name: "Media Library", href: "/admin/media", icon: ImageIcon, active: false },
     { name: "Inquiry", href: "/admin/inquiry", icon: MailCheck, active: false },
     { name: "Samples", href: "/admin/samples", icon: FolderKanban, active: true },
-    { name: "Categories", href: "/admin/categories", icon: Tags, active: false },
-    { name: "Services", href: "#", icon: Briefcase, active: false, badge: "Phase 2" },
-    { name: "Settings", href: "#", icon: Settings, active: false, badge: "Phase 2" },
+    { name: "Settings", href: "/admin/settings", icon: Settings, active: false },
   ];
 
   const filteredSamples = samples.filter((s) => {
@@ -418,246 +415,21 @@ export default function SamplesClient({ user }) {
   });
 
   return (
-    <div className="flex min-h-screen overflow-x-hidden bg-[#031513] text-[#f5f0e8] selection:bg-[#c99a55] selection:text-[#031513]">
-      {/* Mobile Drawer Backdrop */}
-      {mobileMenuOpen && (
-        <div
-          onClick={() => setMobileMenuOpen(false)}
-          className="fixed inset-0 z-40 bg-black/80 backdrop-blur-sm transition-opacity duration-300 md:hidden"
-          aria-hidden="true"
-        />
-      )}
-
-      {/* Mobile Slide-in Drawer Sidebar (≤ 768px) */}
-      <aside
-        className={`fixed inset-y-0 left-0 z-50 flex w-72 max-w-[85vw] flex-col border-r border-[#c99a55]/20 bg-[#041d1a] p-6 shadow-2xl transition-transform duration-300 ease-in-out md:hidden ${
-          mobileMenuOpen ? "translate-x-0" : "-translate-x-full"
-        }`}
-      >
-        <div className="mb-8 flex items-center justify-between">
-          <div>
-            <Link
-              href="/admin"
-              onClick={() => setMobileMenuOpen(false)}
-              className="inline-block"
-            >
-              <img
-                src="/assets/ravion_logo_svg-01.svg"
-                alt="RAVION"
-                className="h-8 w-auto brightness-0 invert"
-              />
-            </Link>
-            <div className="mt-1.5 inline-flex items-center gap-1.5 font-mono text-[10px] tracking-widest text-[#d1aa6b] uppercase">
-              <Shield className="h-3 w-3" />
-              <span>Admin Console</span>
-            </div>
-          </div>
-
-          <button
-            onClick={() => setMobileMenuOpen(false)}
-            className="flex h-11 w-11 min-h-[44px] min-w-[44px] items-center justify-center rounded-xl border border-[#c99a55]/25 bg-[#062623] text-[#f5f0e8]/80 transition-all hover:border-[#c99a55] hover:text-[#d1aa6b] active:scale-95"
-            aria-label="Close sidebar"
-          >
-            <X className="h-5 w-5" />
-          </button>
-        </div>
-
-        <nav className="flex-1 space-y-2 overflow-y-auto">
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            if (item.href && item.href !== "#") {
-              return (
-                <Link
-                  key={item.name}
-                  href={item.href}
-                  onClick={() => setMobileMenuOpen(false)}
-                  className={`flex items-center justify-between rounded-xl px-4 py-3 text-sm font-medium transition-colors ${
-                    item.active
-                      ? "bg-[#c99a55]/15 text-[#d1aa6b] border border-[#c99a55]/30 font-semibold"
-                      : "text-[#f5f0e8]/75 hover:bg-[#062623] hover:text-[#f5f0e8]"
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <Icon className="h-4 w-4" />
-                    <span>{item.name}</span>
-                  </div>
-                </Link>
-              );
-            }
-            return (
-              <div
-                key={item.name}
-                className="flex items-center justify-between rounded-xl px-4 py-3 text-sm font-medium text-[#f5f0e8]/40 cursor-not-allowed opacity-60"
-              >
-                <div className="flex items-center gap-3">
-                  <Icon className="h-4 w-4" />
-                  <span>{item.name}</span>
-                </div>
-                {item.badge && (
-                  <span className="rounded bg-[#062623] px-2 py-0.5 font-mono text-[9px] text-[#d1aa6b]/70 border border-[#c99a55]/20">
-                    {item.badge}
-                  </span>
-                )}
-              </div>
-            );
-          })}
-        </nav>
-
-        <div className="border-t border-[#c99a55]/15 pt-5 space-y-3">
-          <Link
-            href="/"
-            target="_blank"
-            className="flex items-center justify-between rounded-xl border border-[#c99a55]/20 px-4 py-2.5 text-xs font-mono text-[#d1aa6b] transition-all hover:bg-[#c99a55]/10"
-          >
-            <span>Live Website</span>
-            <ExternalLink className="h-3.5 w-3.5" />
-          </Link>
-
-          <button
-            onClick={handleLogout}
-            disabled={isLoggingOut}
-            className="flex w-full items-center gap-2.5 rounded-xl border border-red-500/20 bg-red-950/20 px-4 py-2.5 text-xs font-medium text-red-300 transition-colors hover:bg-red-900/30 active:scale-[0.99]"
-          >
-            {isLoggingOut ? (
-              <Loader2 className="h-4 w-4 animate-spin text-red-400" />
-            ) : (
-              <LogOut className="h-4 w-4 text-red-400" />
-            )}
-            <span>Sign Out</span>
-          </button>
-        </div>
-      </aside>
-
-      {/* Desktop Permanent Sidebar (> 768px) */}
-      <aside className="hidden w-64 flex-col border-r border-[#c99a55]/15 bg-[#041d1a]/80 p-6 backdrop-blur-xl md:flex">
-        <div className="mb-8">
-          <Link href="/admin" className="inline-block">
-            <img
-              src="/assets/ravion_logo_svg-01.svg"
-              alt="RAVION"
-              className="h-8 w-auto brightness-0 invert"
-            />
-          </Link>
-          <div className="mt-2 inline-flex items-center gap-1.5 font-mono text-[10px] tracking-widest text-[#d1aa6b] uppercase">
-            <Shield className="h-3 w-3" />
-            <span>Admin Console</span>
-          </div>
-        </div>
-
-        <nav className="flex-1 space-y-1.5">
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            if (item.href && item.href !== "#") {
-              return (
-                <Link
-                  key={item.name}
-                  href={item.href}
-                  className={`flex items-center justify-between rounded-xl px-3.5 py-2.5 text-sm font-medium transition-colors ${
-                    item.active
-                      ? "bg-[#c99a55]/15 text-[#d1aa6b] border border-[#c99a55]/30 font-semibold"
-                      : "text-[#f5f0e8]/70 hover:bg-[#062623] hover:text-[#f5f0e8]"
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <Icon className="h-4 w-4" />
-                    <span>{item.name}</span>
-                  </div>
-                </Link>
-              );
-            }
-            return (
-              <div
-                key={item.name}
-                className="flex items-center justify-between rounded-xl px-3.5 py-2.5 text-sm font-medium text-[#f5f0e8]/40 cursor-not-allowed opacity-60"
-              >
-                <div className="flex items-center gap-3">
-                  <Icon className="h-4 w-4" />
-                  <span>{item.name}</span>
-                </div>
-                {item.badge && (
-                  <span className="rounded bg-[#062623] px-1.5 py-0.5 font-mono text-[9px] text-[#d1aa6b]/70 border border-[#c99a55]/20">
-                    {item.badge}
-                  </span>
-                )}
-              </div>
-            );
-          })}
-        </nav>
-
-        <div className="border-t border-[#c99a55]/15 pt-5 space-y-3">
-          <Link
-            href="/"
-            target="_blank"
-            className="flex items-center justify-between rounded-xl border border-[#c99a55]/20 px-3.5 py-2 text-xs font-mono text-[#d1aa6b] transition-all hover:bg-[#c99a55]/10"
-          >
-            <span>Live Website</span>
-            <ExternalLink className="h-3.5 w-3.5" />
-          </Link>
-
-          <button
-            onClick={handleLogout}
-            disabled={isLoggingOut}
-            className="flex w-full items-center gap-2.5 rounded-xl border border-red-500/20 bg-red-950/20 px-3.5 py-2.5 text-xs font-medium text-red-300 transition-colors hover:bg-red-900/30 active:scale-[0.99]"
-          >
-            {isLoggingOut ? (
-              <Loader2 className="h-4 w-4 animate-spin text-red-400" />
-            ) : (
-              <LogOut className="h-4 w-4 text-red-400" />
-            )}
-            <span>Sign Out</span>
-          </button>
-        </div>
-      </aside>
-
-      {/* Main Content Area */}
-      <div className="flex min-w-0 flex-1 flex-col overflow-y-auto">
-        {/* Top Header */}
-        <header className="sticky top-0 z-20 flex h-20 items-center justify-between border-b border-[#c99a55]/15 bg-[#031513]/90 px-4 backdrop-blur-md sm:px-6 md:px-10">
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => setMobileMenuOpen(true)}
-              className="flex h-11 w-11 min-h-[44px] min-w-[44px] items-center justify-center rounded-xl border border-[#c99a55]/30 bg-[#062623] text-[#d1aa6b] shadow-sm transition-all hover:border-[#c99a55] hover:bg-[#0a3531] active:scale-95 md:hidden"
-              aria-label="Open navigation sidebar"
-            >
-              <Menu className="h-5 w-5" />
-            </button>
-
-            <div>
-              <p className="font-mono text-[10px] font-medium tracking-widest text-[#d1aa6b] uppercase sm:text-[11px]">
-                RAVION ADMIN
-              </p>
-              <h1 className="font-serif text-lg font-semibold text-[#f5f0e8] sm:text-xl md:text-2xl">
-                Samples & Portfolio
-              </h1>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3 sm:gap-4">
-            <div className="hidden text-right sm:block">
-              <p className="text-xs font-medium text-[#f5f0e8]">
-                Welcome, <span className="text-[#d1aa6b]">{displayName}</span>
-              </p>
-              <p className="font-mono text-[10px] text-[#f5f0e8]/50">{user?.email}</p>
-            </div>
-
-            <button
-              onClick={handleLogout}
-              disabled={isLoggingOut}
-              className="inline-flex min-h-[40px] items-center gap-2 rounded-xl border border-[#c99a55]/30 bg-[#062623] px-3.5 py-2 text-xs font-medium text-[#f5f0e8] transition-all hover:border-[#c99a55] hover:bg-[#0a3531] active:scale-95 sm:px-4"
-            >
-              {isLoggingOut ? (
-                <Loader2 className="h-3.5 w-3.5 animate-spin text-[#d1aa6b]" />
-              ) : (
-                <LogOut className="h-3.5 w-3.5 text-[#d1aa6b]" />
-              )}
-              <span>Logout</span>
-            </button>
-          </div>
-        </header>
-
-        {/* Samples Body */}
-        <main className="flex-1 p-4 sm:p-6 md:p-10">
-          <div className="mx-auto max-w-6xl space-y-6">
+    <AdminLayout
+      user={user}
+      title="Portfolio Samples"
+      subtitle="Manage showcase work shown on homepage and /samples"
+      actions={
+        <button
+          onClick={openCreateModal}
+          className="inline-flex items-center gap-2 rounded-xl bg-[#c99a55] px-4 py-2 text-xs font-semibold text-[#031513] shadow-lg transition-all hover:bg-[#d5ad6d] active:scale-95"
+        >
+          <Plus className="h-4 w-4" />
+          <span>+ Add Sample</span>
+        </button>
+      }
+    >
+      <div className="space-y-6">
             {/* Header info & Add Button */}
             <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
               <div>
@@ -832,8 +604,6 @@ export default function SamplesClient({ user }) {
               </div>
             )}
           </div>
-        </main>
-      </div>
 
       {/* Sample Create / Edit Modal */}
       {modalOpen && (
@@ -1047,6 +817,6 @@ export default function SamplesClient({ user }) {
           </div>
         </div>
       )}
-    </div>
+    </AdminLayout>
   );
 }

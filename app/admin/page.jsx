@@ -1,19 +1,19 @@
 import { redirect } from "next/navigation";
 import { getCurrentAdmin } from "@/lib/auth";
-import DashboardClient from "./DashboardClient";
 
 export const metadata = {
-  title: "Admin Dashboard — RAVION",
-  description: "Administrative dashboard for RAVION website.",
+  title: "Link in Bio Hub — RAVION Admin",
+  description: "Central command center for RAVION Link in Bio.",
 };
 
-export default async function AdminDashboardPage() {
+export default async function AdminHomePage() {
   const admin = await getCurrentAdmin();
 
-  // Route protection: If not authenticated or not an admin, redirect to login
+  // Route protection
   if (!admin || admin.role !== "admin") {
     redirect("/admin/login");
   }
 
-  return <DashboardClient user={admin} />;
+  // Directly navigate to the unified Link in Bio command center
+  redirect("/admin/bio");
 }

@@ -1,6 +1,11 @@
 import { NextResponse } from "next/server";
 import { ObjectId } from "mongodb";
-import { getCategoriesCollection, getSamplesCollection } from "@/lib/db";
+import {
+  getCategoriesCollection,
+  getSamplesCollection,
+  getProductsCollection,
+  getLinksCollection,
+} from "@/lib/db";
 import { requireAdminSession } from "@/lib/auth";
 
 export const runtime = "nodejs";
@@ -13,7 +18,15 @@ function slugify(text) {
     .replace(/^-+|-+$/g, "");
 }
 
-export async function PATCH(request, { params }) {
+export async function PUT(request, context) {
+  return handleUpdate(request, context);
+}
+
+export async function PATCH(request, context) {
+  return handleUpdate(request, context);
+}
+
+async function handleUpdate(request, { params }) {
   try {
     const admin = await requireAdminSession(request);
     if (!admin) {
@@ -25,7 +38,7 @@ export async function PATCH(request, { params }) {
       return NextResponse.json({ error: "Invalid category ID." }, { status: 400 });
     }
 
-    const { name, description } = await request.json();
+    const body = await request.json().catch(() => ({}));
     const categoriesCol = await getCategoriesCollection();
     const existing = await categoriesCol.findOne({ _id: new ObjectId(id) });
 
@@ -35,13 +48,12 @@ export async function PATCH(request, { params }) {
 
     const updateFields = { updatedAt: new Date() };
 
-    if (name !== undefined) {
-      const trimmedName = name.trim();
+    if (body.name !== undefined) {
+      const trimmedName = String(body.name).trim();
       if (!trimmedName) {
         return NextResponse.json({ error: "Category name cannot be empty." }, { status: 400 });
       }
 
-      // Check if duplicate name on another category
       const duplicate = await categoriesCol.findOne({
         _id: { $ne: new ObjectId(id) },
         name: { $regex: new RegExp(`^${trimmedName}$`, "i") },
@@ -51,20 +63,35 @@ export async function PATCH(request, { params }) {
       }
 
       updateFields.name = trimmedName;
-      updateFields.slug = slugify(trimmedName);
+      updateFields.slug = slugify(body.slug || trimmedName);
 
-      // If category name changed, update existing samples with this category
+      // Cascade name change to samples, products, links
       if (existing.name !== trimmedName) {
-        const samplesCol = await getSamplesCollection();
-        await samplesCol.updateMany(
-          { category: existing.name },
-          { $set: { category: trimmedName, updatedAt: new Date() } }
-        );
+        const [samplesCol, productsCol, linksCol] = await Promise.all([
+          getSamplesCollection(),
+          getProductsCollection(),
+          getLinksCollection(),
+        ]);
+
+        await Promise.allSettled([
+          samplesCol.updateMany({ category: existing.name }, { $set: { category: trimmedName } }),
+          productsCol.updateMany({ category: existing.name }, { $set: { category: trimmedName } }),
+          linksCol.updateMany({ category: existing.name }, { $set: { category: trimmedName } }),
+        ]);
       }
     }
 
-    if (description !== undefined) {
-      updateFields.description = description.trim();
+    if (body.description !== undefined) {
+      updateFields.description = String(body.description).trim();
+    }
+    if (body.icon !== undefined) {
+      updateFields.icon = String(body.icon).trim();
+    }
+    if (typeof body.order === "number") {
+      updateFields.order = body.order;
+    }
+    if (typeof body.isActive === "boolean") {
+      updateFields.isActive = body.isActive;
     }
 
     await categoriesCol.updateOne({ _id: new ObjectId(id) }, { $set: updateFields });
@@ -72,7 +99,7 @@ export async function PATCH(request, { params }) {
 
     return NextResponse.json({ category: updated });
   } catch (error) {
-    console.error("Admin category PATCH error:", error);
+    console.error("Admin category update error:", error);
     return NextResponse.json({ error: "Could not update category." }, { status: 500 });
   }
 }
@@ -89,11 +116,38 @@ export async function DELETE(request, { params }) {
       return NextResponse.json({ error: "Invalid category ID." }, { status: 400 });
     }
 
-    const categoriesCol = await getCategoriesCollection();
-    const category = await categoriesCol.findOne({ _id: new ObjectId(id) });
+    const [categoriesCol, samplesCol, productsCol, linksCol] = await Promise.all([
+      getCategoriesCollection(),
+      getSamplesCollection(),
+      getProductsCollection(),
+      getLinksCollection(),
+    ]);
 
+    const category = await categoriesCol.findOne({ _id: new ObjectId(id) });
     if (!category) {
       return NextResponse.json({ error: "Category not found." }, { status: 404 });
+    }
+
+    // Safety check: Prevent deletion if still used by samples, products, or links
+    const [sampleCount, productCount, linkCount] = await Promise.all([
+      samplesCol.countDocuments({ category: category.name }),
+      productsCol.countDocuments({ category: category.name }),
+      linksCol.countDocuments({ category: category.name }),
+    ]);
+
+    const totalUsage = sampleCount + productCount + linkCount;
+    const { searchParams } = new URL(request.url);
+    const force = searchParams.get("force") === "true";
+
+    if (totalUsage > 0 && !force) {
+      return NextResponse.json(
+        {
+          error: `Cannot delete "${category.name}". It is currently assigned to ${productCount} product(s), ${linkCount} link(s), and ${sampleCount} sample(s). Please reassign them first or delete them.`,
+          inUse: true,
+          details: { sampleCount, productCount, linkCount, totalUsage },
+        },
+        { status: 409 }
+      );
     }
 
     await categoriesCol.deleteOne({ _id: new ObjectId(id) });

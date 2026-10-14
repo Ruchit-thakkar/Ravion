@@ -1,5 +1,11 @@
 import { NextResponse } from "next/server";
-import { getCategoriesCollection, getSamplesCollection, ensureDefaultCategories } from "@/lib/db";
+import {
+  getCategoriesCollection,
+  getSamplesCollection,
+  getProductsCollection,
+  getLinksCollection,
+  ensureDefaultCategories,
+} from "@/lib/db";
 import { requireAdminSession } from "@/lib/auth";
 
 export const runtime = "nodejs";
@@ -20,18 +26,30 @@ export async function GET(request) {
     }
 
     await ensureDefaultCategories();
-    const categoriesCol = await getCategoriesCollection();
-    const samplesCol = await getSamplesCollection();
+    const [categoriesCol, samplesCol, productsCol, linksCol] = await Promise.all([
+      getCategoriesCollection(),
+      getSamplesCollection(),
+      getProductsCollection(),
+      getLinksCollection(),
+    ]);
 
-    const categories = await categoriesCol.find({}).sort({ name: 1 }).toArray();
+    const categories = await categoriesCol.find({}).sort({ order: 1, name: 1 }).toArray();
 
-    // Attach sample counts to categories
+    // Attach usage counts across samples, products, and links
     const enriched = await Promise.all(
       categories.map(async (cat) => {
-        const count = await samplesCol.countDocuments({ category: cat.name });
+        const [sampleCount, productCount, linkCount] = await Promise.all([
+          samplesCol.countDocuments({ category: cat.name }),
+          productsCol.countDocuments({ category: cat.name }),
+          linksCol.countDocuments({ category: cat.name }),
+        ]);
+
         return {
           ...cat,
-          sampleCount: count,
+          sampleCount,
+          productCount,
+          linkCount,
+          totalUsage: sampleCount + productCount + linkCount,
         };
       })
     );
@@ -50,17 +68,17 @@ export async function POST(request) {
       return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
     }
 
-    const { name, description = "" } = await request.json();
-    const trimmedName = (name || "").trim();
+    const body = await request.json().catch(() => ({}));
+    const trimmedName = String(body.name || "").trim();
 
     if (!trimmedName) {
       return NextResponse.json({ error: "Category name is required." }, { status: 400 });
     }
 
     const categoriesCol = await getCategoriesCollection();
-    let slug = slugify(trimmedName);
-    
-    // Check if category name already exists (case-insensitive)
+    let slug = slugify(body.slug || trimmedName);
+
+    // Check if category name already exists
     const existing = await categoriesCol.findOne({
       name: { $regex: new RegExp(`^${trimmedName}$`, "i") },
     });
@@ -75,19 +93,22 @@ export async function POST(request) {
       slug = `${baseSlug}-${n++}`;
     }
 
+    const highest = await categoriesCol.find({}).sort({ order: -1 }).limit(1).toArray();
+    const nextOrder = highest.length && typeof highest[0].order === "number" ? highest[0].order + 1 : 1;
+
     const newCategory = {
       name: trimmedName,
       slug,
-      description: description.trim(),
+      description: String(body.description || "").trim(),
+      icon: String(body.icon || "Folder").trim(),
+      order: typeof body.order === "number" ? body.order : nextOrder,
+      isActive: body.isActive !== undefined ? Boolean(body.isActive) : true,
       createdAt: new Date(),
       updatedAt: new Date(),
     };
 
-    const result = await categoriesCol.insertOne(newCategory);
-    return NextResponse.json(
-      { category: { ...newCategory, _id: result.insertedId, sampleCount: 0 } },
-      { status: 201 }
-    );
+    const res = await categoriesCol.insertOne(newCategory);
+    return NextResponse.json({ category: { ...newCategory, _id: res.insertedId } }, { status: 201 });
   } catch (error) {
     console.error("Admin categories POST error:", error);
     return NextResponse.json({ error: "Could not create category." }, { status: 500 });
