@@ -288,23 +288,25 @@ export function Home() {
         }
       );
 
-      gsap.fromTo(
-        ".work-card-item",
-        { y: 35, opacity: 0 },
-        {
-          y: 0,
-          opacity: 1,
-          stagger: 0.12,
-          duration: 0.8,
-          ease: "power3.out",
-          clearProps: "transform,opacity",
-          scrollTrigger: {
-            trigger: "#work",
-            start: "top 90%",
-            toggleActions: "play none none none",
-          },
-        }
-      );
+      if (el.querySelectorAll(".work-card-item").length > 0) {
+        gsap.fromTo(
+          ".work-card-item",
+          { y: 35, opacity: 0 },
+          {
+            y: 0,
+            opacity: 1,
+            stagger: 0.12,
+            duration: 0.8,
+            ease: "power3.out",
+            clearProps: "transform,opacity",
+            scrollTrigger: {
+              trigger: "#work",
+              start: "top 90%",
+              toggleActions: "play none none none",
+            },
+          }
+        );
+      }
 
       ScrollTrigger.refresh();
     }, homeRef);
@@ -969,18 +971,20 @@ export function Samples() {
         }
       );
 
-      gsap.fromTo(
-        ".samples-grid-item",
-        { y: 35, opacity: 0 },
-        {
-          y: 0,
-          opacity: 1,
-          stagger: 0.08,
-          duration: 0.75,
-          ease: "power3.out",
-          clearProps: "transform,opacity",
-        }
-      );
+      if (el.querySelectorAll(".samples-grid-item").length > 0) {
+        gsap.fromTo(
+          ".samples-grid-item",
+          { y: 35, opacity: 0 },
+          {
+            y: 0,
+            opacity: 1,
+            stagger: 0.08,
+            duration: 0.75,
+            ease: "power3.out",
+            clearProps: "transform,opacity",
+          }
+        );
+      }
     }, samplesRef);
 
     return () => ctx.revert();

@@ -22,12 +22,6 @@ export default async function sitemap() {
       priority: 0.9,
     },
     {
-      url: `${baseUrl}/bio`,
-      lastModified: now,
-      changeFrequency: "monthly",
-      priority: 0.6,
-    },
-    {
       url: `${baseUrl}/ruchit`,
       lastModified: now,
       changeFrequency: "monthly",

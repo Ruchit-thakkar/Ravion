@@ -148,15 +148,6 @@ export function Footer() {
                   Contact Us
                 </Link>
               </li>
-              <li>
-                <Link
-                  href="/bio"
-                  className="inline-flex items-center gap-1 text-[#f5f0e8]/75 transition-colors hover:text-[#d1aa6b]"
-                >
-                  <span>Link in Bio</span>
-                  <ArrowUpRight size={13} className="opacity-60" />
-                </Link>
-              </li>
             </ul>
           </div>
 
