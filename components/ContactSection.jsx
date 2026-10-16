@@ -41,6 +41,33 @@ export function ContactSection() {
   const [busy, setBusy] = useState(false);
   const sectionRef = useRef(null);
 
+  // Dynamic settings from Phase 3 with siteConfig as default fallback
+  const [contactData, setContactData] = useState({
+    email: siteConfig.contact.email,
+    phone: siteConfig.contact.phone,
+    phoneRaw: siteConfig.contact.phoneRaw,
+    whatsappUrl: siteConfig.contact.whatsappUrl,
+    instagram: siteConfig.contact.instagram,
+    instagramUrl: siteConfig.contact.instagramUrl,
+    turnaroundNote:
+      "Every inquiry receives a direct review within 24 hours. Transparent 50% advance project reservation applies to all scheduled work.",
+  });
+
+  useEffect(() => {
+    fetch("/api/settings")
+      .then((r) => r.json())
+      .then((res) => {
+        if (res?.settings?.contact) {
+          setContactData((prev) => ({
+            ...prev,
+            ...res.settings.contact,
+            turnaroundNote: res.settings.footer?.turnaroundNote || prev.turnaroundNote,
+          }));
+        }
+      })
+      .catch(() => {});
+  }, []);
+
   useEffect(() => {
     if (!defaultAnimationConfig.animationEnabled || isReducedMotion()) return;
     const el = sectionRef.current;
@@ -194,7 +221,7 @@ export function ContactSection() {
 
           <div className="grid gap-2.5 sm:grid-cols-2">
             <a
-              href={siteConfig.contact.whatsappUrl}
+              href={contactData.whatsappUrl || siteConfig.contact.whatsappUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="group flex items-center gap-3 rounded-xl border border-[#082d2a]/12 bg-white/70 p-3.5 shadow-sm transition-all hover:border-emerald-600/40 hover:bg-white hover:shadow-md"
@@ -204,12 +231,12 @@ export function ContactSection() {
               </div>
               <div className="text-xs">
                 <span className="block font-medium text-[#082d2a]">WhatsApp Direct</span>
-                <span className="font-mono text-[11px] text-[#082d2a]/60">+{siteConfig.contact.phoneRaw.replace(/[^0-9]/g, "")}</span>
+                <span className="font-mono text-[11px] text-[#082d2a]/60">+{String(contactData.phoneRaw || siteConfig.contact.phoneRaw).replace(/[^0-9]/g, "")}</span>
               </div>
             </a>
 
             <a
-              href={`mailto:${siteConfig.contact.email}`}
+              href={`mailto:${contactData.email || siteConfig.contact.email}`}
               className="group flex items-center gap-3 rounded-xl border border-[#082d2a]/12 bg-white/70 p-3.5 shadow-sm transition-all hover:border-[#c99a55]/40 hover:bg-white hover:shadow-md"
             >
               <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#c99a55]/15 text-[#8b714e] transition-transform group-hover:scale-110">
@@ -217,12 +244,12 @@ export function ContactSection() {
               </div>
               <div className="text-xs">
                 <span className="block font-medium text-[#082d2a]">Email Us</span>
-                <span className="truncate block font-mono text-[11px] text-[#082d2a]/60">{siteConfig.contact.email}</span>
+                <span className="truncate block font-mono text-[11px] text-[#082d2a]/60">{contactData.email || siteConfig.contact.email}</span>
               </div>
             </a>
 
             <a
-              href={`tel:${siteConfig.contact.phoneRaw}`}
+              href={`tel:${contactData.phoneRaw || siteConfig.contact.phoneRaw}`}
               className="group flex items-center gap-3 rounded-xl border border-[#082d2a]/12 bg-white/70 p-3.5 shadow-sm transition-all hover:border-[#c99a55]/40 hover:bg-white hover:shadow-md"
             >
               <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#082d2a]/10 text-[#082d2a] transition-transform group-hover:scale-110">
@@ -230,12 +257,12 @@ export function ContactSection() {
               </div>
               <div className="text-xs">
                 <span className="block font-medium text-[#082d2a]">Direct Call</span>
-                <span className="font-mono text-[11px] text-[#082d2a]/60">{siteConfig.contact.phone}</span>
+                <span className="font-mono text-[11px] text-[#082d2a]/60">{contactData.phone || siteConfig.contact.phone}</span>
               </div>
             </a>
 
             <a
-              href={siteConfig.contact.instagramUrl}
+              href={contactData.instagramUrl || siteConfig.contact.instagramUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="group flex items-center gap-3 rounded-xl border border-[#082d2a]/12 bg-white/70 p-3.5 shadow-sm transition-all hover:border-pink-500/40 hover:bg-white hover:shadow-md"
@@ -245,7 +272,7 @@ export function ContactSection() {
               </div>
               <div className="text-xs">
                 <span className="block font-medium text-[#082d2a]">Instagram</span>
-                <span className="font-mono text-[11px] text-[#082d2a]/60">{siteConfig.contact.instagram}</span>
+                <span className="font-mono text-[11px] text-[#082d2a]/60">{contactData.instagram || siteConfig.contact.instagram}</span>
               </div>
             </a>
           </div>
@@ -257,7 +284,7 @@ export function ContactSection() {
             Project Turnaround Commitment
           </p>
           <p className="mt-1">
-            Every inquiry receives a direct review within 24 hours. Transparent 50% advance project reservation applies to all scheduled work.
+            {contactData.turnaroundNote || "Every inquiry receives a direct review within 24 hours. Transparent 50% advance project reservation applies to all scheduled work."}
           </p>
         </div>
       </div>

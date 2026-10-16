@@ -13,15 +13,22 @@ if (!uri) {
 }
 
 async function seed() {
+  const email = (process.argv[2] || process.env.ADMIN_EMAIL || "").toLowerCase().trim();
+  const password = process.argv[3] || process.env.ADMIN_PASSWORD;
+
+  if (!email || !password) {
+    console.error("❌ ADMIN_EMAIL and ADMIN_PASSWORD are required.");
+    console.error("   Set them in your .env file or pass them as CLI arguments:");
+    console.error("   npm run seed:admin <email> <password>");
+    process.exit(1);
+  }
+
   const client = new MongoClient(uri);
   try {
     await client.connect();
     console.log("Connected to MongoDB");
     const db = client.db(dbName);
     const admins = db.collection("admins");
-
-    const email = (process.env.ADMIN_EMAIL || "ruchit@gmail.com").toLowerCase().trim();
-    const password = process.env.ADMIN_PASSWORD || "ruchit@123";
 
     const existing = await admins.findOne({ email });
     const passwordHash = await bcrypt.hash(password, 10);
@@ -48,10 +55,11 @@ async function seed() {
         createdAt: now,
         updatedAt: now,
       });
-      console.log(`✅ Default admin ${email} created successfully.`);
+      console.log(`✅ Administrator ${email} created successfully.`);
     }
   } catch (err) {
-    console.error("❌ Error seeding admin:", err);
+    console.error("❌ Error provisioning admin:", err);
+    process.exit(1);
   } finally {
     await client.close();
   }

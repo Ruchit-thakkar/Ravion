@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   ArrowUpRight,
@@ -33,6 +34,37 @@ function InstagramIcon({ size = 16, className = "" }) {
 
 export function Footer() {
   const currentYear = new Date().getFullYear();
+
+  // Dynamic settings from Phase 3 with siteConfig as default fallback
+  const [footerData, setFooterData] = useState({
+    name: siteConfig.name,
+    footerDescription: siteConfig.footerDescription,
+    subDescription: siteConfig.subDescription,
+    copyrightText: `© ${currentYear} ${siteConfig.name}. All rights reserved.`,
+    location: "India (भारत) · Global Studio",
+    contact: siteConfig.contact,
+  });
+
+  useEffect(() => {
+    fetch("/api/settings")
+      .then((r) => r.json())
+      .then((res) => {
+        if (res?.settings) {
+          setFooterData((prev) => ({
+            ...prev,
+            name: res.settings.branding?.name || prev.name,
+            footerDescription: res.settings.footer?.footerDescription || prev.footerDescription,
+            copyrightText: res.settings.footer?.copyrightText || prev.copyrightText,
+            location: res.settings.contact?.location || prev.location,
+            contact: {
+              ...prev.contact,
+              ...(res.settings.contact || {}),
+            },
+          }));
+        }
+      })
+      .catch(() => {});
+  }, [currentYear]);
 
   return (
     <footer className="bg-[#051f1c] text-[#f5f0e8] border-t border-[#c99a55]/20 selection:bg-[#c99a55] selection:text-[#031513]">
@@ -87,7 +119,7 @@ export function Footer() {
             </p>
 
             <p className="text-xs leading-relaxed text-[#f5f0e8]/65">
-              {siteConfig.footerDescription}
+              {footerData.footerDescription || siteConfig.footerDescription}
             </p>
           </div>
 
@@ -217,7 +249,7 @@ export function Footer() {
             <ul className="space-y-3 text-sm">
               <li>
                 <a
-                  href={`mailto:${siteConfig.contact.email}`}
+                  href={`mailto:${footerData.contact?.email || siteConfig.contact.email}`}
                   className="group flex items-start gap-2.5 text-[#f5f0e8]/75 transition-colors hover:text-[#d1aa6b]"
                   aria-label="Send email to Ravion"
                 >
@@ -225,12 +257,12 @@ export function Footer() {
                     size={16}
                     className="mt-0.5 shrink-0 text-[#d1aa6b] transition-transform group-hover:scale-110"
                   />
-                  <span className="break-all">{siteConfig.contact.email}</span>
+                  <span className="break-all">{footerData.contact?.email || siteConfig.contact.email}</span>
                 </a>
               </li>
               <li>
                 <a
-                  href={`tel:${siteConfig.contact.phoneRaw}`}
+                  href={`tel:${footerData.contact?.phoneRaw || siteConfig.contact.phoneRaw}`}
                   className="group flex items-center gap-2.5 text-[#f5f0e8]/75 transition-colors hover:text-[#d1aa6b]"
                   aria-label="Call Ravion phone"
                 >
@@ -238,12 +270,12 @@ export function Footer() {
                     size={16}
                     className="shrink-0 text-[#d1aa6b] transition-transform group-hover:scale-110"
                   />
-                  <span>{siteConfig.contact.phone}</span>
+                  <span>{footerData.contact?.phone || siteConfig.contact.phone}</span>
                 </a>
               </li>
               <li>
                 <a
-                  href={siteConfig.contact.whatsappUrl}
+                  href={footerData.contact?.whatsappUrl || siteConfig.contact.whatsappUrl}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="group flex items-center gap-2.5 text-[#f5f0e8]/75 transition-colors hover:text-emerald-400"
@@ -253,12 +285,12 @@ export function Footer() {
                     size={16}
                     className="shrink-0 text-emerald-400 transition-transform group-hover:scale-110"
                   />
-                  <span>WhatsApp ({siteConfig.contact.phone})</span>
+                  <span>WhatsApp ({footerData.contact?.phone || siteConfig.contact.phone})</span>
                 </a>
               </li>
               <li>
                 <a
-                  href={siteConfig.contact.instagramUrl}
+                  href={footerData.contact?.instagramUrl || siteConfig.contact.instagramUrl}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="group flex items-center gap-2.5 text-[#f5f0e8]/75 transition-colors hover:text-[#d1aa6b]"
@@ -268,7 +300,7 @@ export function Footer() {
                     size={16}
                     className="shrink-0 text-[#d1aa6b] transition-transform group-hover:scale-110"
                   />
-                  <span>{siteConfig.contact.instagram}</span>
+                  <span>{footerData.contact?.instagram || siteConfig.contact.instagram}</span>
                 </a>
               </li>
             </ul>
@@ -320,7 +352,7 @@ export function Footer() {
           </div>
 
           <div className="font-mono text-[11px] text-[#d1aa6b]/80">
-            India (भारत) · Global Studio
+            {footerData.location || "India (भारत) · Global Studio"}
           </div>
         </div>
       </div>
@@ -328,7 +360,7 @@ export function Footer() {
       {/* Bottom Copyright Bar */}
       <div className="border-t border-white/10 bg-[#020e0d] py-6">
         <div className="mx-auto flex w-[min(1180px,calc(100%-32px))] flex-col items-center justify-between gap-3 text-xs text-white/50 sm:flex-row">
-          <p>© {currentYear} {siteConfig.name}. All rights reserved.</p>
+          <p>{footerData.copyrightText || `© ${currentYear} ${footerData.name || siteConfig.name}. All rights reserved.`}</p>
           <p className="font-mono text-[11px] tracking-[0.2em] text-[#d1aa6b]">
             BUILD · CREATE · INNOVATE
           </p>
